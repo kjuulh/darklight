@@ -1,0 +1,9 @@
+{
+  "name": "DarkLight",
+  "short_name": "DL",
+  "theme_color": "#FFFFFF",
+  "background_color": "#FFFFFF",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait"
+}
