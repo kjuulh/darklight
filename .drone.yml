@@ -12,6 +12,7 @@ steps:
       repo: kasperhermansen/darklight-client
       tags: latest
       context: ./client/
+      dockerfile: ./client/Dockerfile
 
   - name: server
     image: plugins/docker
@@ -23,6 +24,7 @@ steps:
       repo: kasperhermansen/darklight-server
       tags: latest
       context: ./server/
+      dockerfile: ./server/Dockerfile
 
   - name: send telegram notification
     image: appleboy/drone-telegram
