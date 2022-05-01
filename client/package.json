@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@next/swc-darwin-arm64": "^12.1.5",
     "axios": "^0.27.2",
     "next": "12.1.5",
     "next-pwa": "^5.5.2",

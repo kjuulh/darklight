@@ -1,9 +1,15 @@
 use thiserror::Error;
 use std::fmt::{Display, Formatter, write};
 use std::fs::{canonicalize, create_dir_all};
+use std::num::ParseIntError;
 use std::path::{Path, PathBuf};
 use std::process::{Output, Stdio};
+use std::time::Duration;
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
 use tokio::process::Command;
+use tokio::time::{Instant, sleep};
+use lazy_static::lazy_static;
+use regex::Regex;
 
 #[derive(Error, Debug)]
 pub enum YoutubeDLError {
@@ -137,7 +143,52 @@ impl YoutubeDL {
             cmd.arg(&link);
         }
 
-        let pr = cmd.spawn()?;
+        let mut pr = cmd.spawn()?;
+
+        {
+            let stdout = pr.stdout.as_mut().unwrap();
+            let stdout_reader = BufReader::new(stdout);
+            let mut stdout_lines = stdout_reader.lines();
+
+            while let Ok(Some(line)) = stdout_lines.next_line().await {
+                if let Some(Ok(percentage)) = parse_line(line) {
+                    println!("percentage: {}", percentage)
+                }
+            }
+        }
+
         Ok(pr.wait_with_output().await?)
+    }
+}
+
+fn parse_line(line: String) -> Option<core::result::Result<u32, ParseIntError>> {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"\[download\]\s+(\d+)").unwrap();
+    }
+
+    let capture: regex::Captures = RE.captures(line.as_str())?;
+    if capture.len() != 2 {
+        return None;
+    }
+    let str = &capture[1];
+    Some(str.to_string().parse::<u32>())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::services::yt::parse_line;
+
+    #[test]
+    fn parse() {
+        let percentage = parse_line("[download]  95.4% of ~215.85MiB at  9.61MiB/s ETA 00:01 (frag 144/151)".into());
+
+        assert_eq!(percentage, Some(Ok(95)))
+    }
+
+    #[test]
+    fn parse_get_nothing() {
+        let nothing = parse_line("[download] Got server HTTP error: The read operation timed out. Retrying (attempt 1 of 10) ...".into());
+
+        assert_eq!(nothing, None)
     }
 }

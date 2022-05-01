@@ -168,6 +168,8 @@ dependencies = [
  "chrono",
  "envconfig",
  "envconfig_derive",
+ "lazy_static",
+ "regex",
  "rocket",
  "rocket_cors",
  "thiserror",

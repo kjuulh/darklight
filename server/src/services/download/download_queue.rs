@@ -151,6 +151,8 @@ fn is_older(created: DateTime<Utc>, now: DateTime<Utc>) -> bool {
 async fn download_media(storage_path: String, link: &'_ str, id: &'_ str) -> Result<(), Box<dyn Error>> {
     let args = vec![
         //Arg::new("--quiet"),
+        Arg::new("--progress"),
+        Arg::new("--newline"),
         Arg::new_with_args("--output", "%(title).90s.%(ext)s"),
     ];
 

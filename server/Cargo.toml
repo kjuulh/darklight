@@ -15,3 +15,5 @@ tokio-cron-scheduler = "0.7.0"
 envconfig = "0.10.0"
 envconfig_derive = "0.10.0"
 thiserror = "1.0.31"
+regex = {version = "1.5.5"}
+lazy_static = "1.4.0"
