@@ -21,7 +21,7 @@ const DownloadingFile: FC<DownloadingFileProps> = (props) => {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:8000/download/${props.id}`)
+      .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/download/${props.id}`)
       .then((res) => {
         setFileUrl(res.data);
       })
