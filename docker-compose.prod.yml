@@ -1,11 +1,13 @@
 services:
   client:
     image: kasperhermansen/darklight-client
+    restart: always
     ports:
       - 9081:3000
 
   server:
     image: kasperhermansen/darklight-server
+    restart: always
     environment:
       FRONTEND_URL: https://darklight.front.kjuulh.io
       STORAGE_PATH: /mnt/storage
