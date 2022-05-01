@@ -1,4 +1,3 @@
-
 use rocket::tokio::sync::Mutex;
 use std::collections::HashMap;
 use std::error::Error;
@@ -15,6 +14,7 @@ use rocket::tokio;
 use rocket::tokio::task;
 use uuid::Uuid;
 use ytd_rs::{Arg, YoutubeDL};
+use crate::config::Config;
 
 #[derive(Clone)]
 pub enum DownloadState {
@@ -35,15 +35,18 @@ pub struct Download {
 
 pub struct DownloadQueue {
     downloads: Arc<Mutex<HashMap<String, Download>>>,
+    cfg: Arc<Config>,
 }
 
 impl DownloadQueue {
-    pub fn new() -> Self {
-        task::spawn(async {
-            tokio::fs::remove_dir_all("./target/output".to_string()).await
+    pub fn new(cfg: Arc<Config>) -> Self {
+        let config = cfg.clone();
+        task::spawn(async move {
+            tokio::fs::remove_dir_all(config.storage_path.to_string()).await
         });
 
         Self {
+            cfg: cfg.clone(),
             downloads: Arc::new(Mutex::new(HashMap::new())),
         }
     }
@@ -65,13 +68,13 @@ impl DownloadQueue {
             },
         );
 
-        if let Err(e) = download_media(link, download_id.as_str()) {
+        if let Err(e) = download_media(self.cfg.storage_path.to_string(), link, download_id.as_str()) {
             println!("{}", e);
             return "failure".into();
         }
 
         let mut file_name: Option<String> = None;
-        let mut dir = tokio::fs::read_dir(format!("./target/output/{}", download_id)).await.unwrap();
+        let mut dir = tokio::fs::read_dir(format!("{}/{}", self.cfg.storage_path, download_id)).await.unwrap();
         if let Some(entry) = dir.next_entry().await.unwrap() {
             file_name = Some(entry.file_name().to_string_lossy().to_string());
         }
@@ -96,7 +99,7 @@ impl DownloadQueue {
 
     pub async fn get_file(&self, download_id: &'_ str) -> Option<NamedFile> {
         if let Some(download) = self.downloads.lock().await.get(download_id) {
-            let mut dir = tokio::fs::read_dir(format!("./target/output/{}", download.id)).await.ok()?;
+            let mut dir = tokio::fs::read_dir(format!("{}/{}", self.cfg.storage_path, download.id)).await.ok()?;
 
             if let Some(entry) = dir.next_entry().await.ok()? {
                 return NamedFile::open(entry.path()).await.ok();
@@ -128,7 +131,7 @@ impl DownloadQueue {
     }
 
     async fn clean_up(&self, download: &Download) -> std::io::Result<()> {
-        tokio::fs::remove_dir_all(format!("./target/output/{}", download.id)).await
+        tokio::fs::remove_dir_all(format!("{}/{}", self.cfg.storage_path, download.id)).await
     }
 }
 
@@ -136,13 +139,13 @@ fn is_older(created: DateTime<Utc>, now: DateTime<Utc>) -> bool {
     created + chrono::Duration::minutes(5) < now
 }
 
-fn download_media(link: &'_ str, id: &'_ str) -> Result<(), Box<dyn Error>> {
+fn download_media(storage_path: String, link: &'_ str, id: &'_ str) -> Result<(), Box<dyn Error>> {
     let args = vec![
         //Arg::new("--quiet"),
         Arg::new_with_arg("--output", "%(title).90s.%(ext)s"),
     ];
 
-    let path = PathBuf::from(format!("./target/output/{id}"));
+    let path = PathBuf::from(format!("{storage_path}/{id}"));
     let ytd = YoutubeDL::new(&path, args, link)?;
 
     // start download

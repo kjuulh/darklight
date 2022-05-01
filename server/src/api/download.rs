@@ -3,20 +3,12 @@ use rocket::fairing::AdHoc;
 use rocket::response::status::NotFound;
 use rocket::response::Responder;
 use rocket::serde::{json::Json, Deserialize, Serialize};
-
 use rocket::{Request, response, State};
-
-
-
-
 use std::sync::Arc;
 use rocket::fs::NamedFile;
 use rocket::http::{Header, Method};
-
 use rocket_cors::AllowedOrigins;
-
-
-
+use crate::config::Config;
 
 type Downloads<'r> = &'r State<Arc<DownloadQueue>>;
 
@@ -96,8 +88,8 @@ async fn get_downloaded_file(
     }
 }
 
-pub fn stage(download_queue: Arc<DownloadQueue>) -> AdHoc {
-    let allowed_origins = AllowedOrigins::some_exact(&["http://localhost:3000"]);
+pub fn stage(download_queue: Arc<DownloadQueue>, cfg: Arc<Config>) -> AdHoc {
+    let allowed_origins = AllowedOrigins::some_exact(&[cfg.frontend_url.to_string()]);
 
     let cors = rocket_cors::CorsOptions {
         allowed_origins,

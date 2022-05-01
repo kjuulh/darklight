@@ -1,0 +1,38 @@
+kind: pipeline
+name: default
+type: docker
+steps:
+  - name: client
+    image: plugins/docker
+    settings:
+      username: kasperhermansen
+      password:
+        from_secret:
+          docker_secret
+      repo: kasperhermansen/darklight-client
+      tags: latest
+      context: client
+
+  - name: server
+    image: plugins/docker
+    settings:
+      username: kasperhermansen
+      password:
+        from_secret:
+          docker_secret
+      repo: kasperhermansen/darklight-server
+      tags: latest
+      context: server
+
+  - name: send telegram notification
+    image: appleboy/drone-telegram
+    settings:
+      token:
+        from_secret: telegram_token
+      to: 2129601481
+      format: markdown
+    depends_on:
+      - client
+      - server
+    when:
+      status: [success, failure]
