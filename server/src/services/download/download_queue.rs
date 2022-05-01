@@ -111,14 +111,18 @@ impl DownloadQueue {
 
     pub async fn remove_old(&self) -> Result<(), Box<dyn Error>> {
         println!("remove old files triggered");
-        let downloads = self.downloads.lock().await;
+        let mut downloads = self.downloads.lock().await;
 
         for download in downloads.iter().map(|d| d.1) {
             if is_older(download.insert_time, Utc::now()) {
                 println!("cleaning up for: {}", download.id);
                 match self.clean_up(download).await {
                     Ok(_) => {
-                        println!("cleanup done for: {}", download.id)
+                        println!("cleanup done for: {}", download.id);
+
+                        if let Err (e) = downloads.remove(download.id.as_str()) {
+                            println!("{:?}", e)
+                        }
                     }
                     Err(e) => {
                         println!("cleanup failed: {:?}", e)
