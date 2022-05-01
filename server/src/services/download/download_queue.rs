@@ -13,8 +13,8 @@ use rocket::tokio;
 
 use rocket::tokio::task;
 use uuid::Uuid;
-use ytd_rs::{Arg, YoutubeDL};
 use crate::config::Config;
+use crate::services::yt::{Arg, YoutubeDL};
 
 #[derive(Clone)]
 pub enum DownloadState {
@@ -68,7 +68,7 @@ impl DownloadQueue {
             },
         );
 
-        if let Err(e) = download_media(self.cfg.storage_path.to_string(), link, download_id.as_str()) {
+        if let Err(e) = download_media(self.cfg.storage_path.to_string(), link, download_id.as_str()).await {
             println!("{}", e);
             return "failure".into();
         }
@@ -148,17 +148,17 @@ fn is_older(created: DateTime<Utc>, now: DateTime<Utc>) -> bool {
     created + chrono::Duration::minutes(5) < now
 }
 
-fn download_media(storage_path: String, link: &'_ str, id: &'_ str) -> Result<(), Box<dyn Error>> {
+async fn download_media(storage_path: String, link: &'_ str, id: &'_ str) -> Result<(), Box<dyn Error>> {
     let args = vec![
         //Arg::new("--quiet"),
-        Arg::new_with_arg("--output", "%(title).90s.%(ext)s"),
+        Arg::new_with_args("--output", "%(title).90s.%(ext)s"),
     ];
 
     let path = PathBuf::from(format!("{storage_path}/{id}"));
     let ytd = YoutubeDL::new(&path, args, link)?;
 
     // start download
-    let download = ytd.download()?;
+    let download = ytd.download().await?;
 
     // print out the download path
     println!("Your download: {}", download.output_dir().to_string_lossy());
