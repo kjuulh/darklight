@@ -3,7 +3,7 @@ services:
     image: kasperhermansen/darklight-client
     restart: always
     ports:
-      - 9081:3000
+      - 9071:3000
 
   server:
     image: kasperhermansen/darklight-server
@@ -12,4 +12,4 @@ services:
       FRONTEND_URL: https://darklight.front.kjuulh.io
       STORAGE_PATH: /mnt/storage
     ports:
-      - 9082:8000
+      - 9072:8000
