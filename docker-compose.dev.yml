@@ -1,0 +1,15 @@
+services:
+  client:
+    build:
+      context: client
+    ports:
+      - 3000:3000
+
+  server:
+    build:
+      context: server
+    environment:
+      FRONTEND_URL: http://localhost:3000
+      STORAGE_PATH: /mnt/storage
+    ports:
+      - 8000:8000

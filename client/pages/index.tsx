@@ -35,7 +35,7 @@ const DownloadingFile: FC<DownloadingFileProps> = (props) => {
   return (
     <div>
       <a
-        href={`http://localhost:8000/download/${props.id}/file`}
+        href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/download/${props.id}/file`}
         download={fileUrl.file_name}
       >
         {fileUrl.file_name}
@@ -51,7 +51,7 @@ const Home: NextPage = () => {
   const initiateDownload = (downloadLink: string) => {
     axios
       .post(
-        "http://localhost:8000/download",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/download`,
         {
           link: downloadLink,
         },
