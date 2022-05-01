@@ -7,7 +7,7 @@ services:
   server:
     image: kasperhermansen/darklight-server
     environment:
-      FRONTEND_URL: https://downloads.front.kjuulh.io
+      FRONTEND_URL: https://darklight.front.kjuulh.io
       STORAGE_PATH: /mnt/storage
     ports:
       - 9082:8000
