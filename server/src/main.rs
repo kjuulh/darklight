@@ -6,7 +6,7 @@ extern crate rocket;
 
 use std::sync::Arc;
 use tokio_cron_scheduler::{Job, JobScheduler};
-use crate::services::download::download_queue::{DownloadQueue, DownloadState};
+use crate::services::download::download_queue::{DownloadQueue};
 
 #[rocket::main]
 async fn main() {
@@ -14,8 +14,8 @@ async fn main() {
 
 
     let external_queue = download_queue.clone();
-    let mut sched = JobScheduler::new().unwrap();
-    sched.add(Job::new_async("1/30 * * * * *", move |uuid, l| {
+    let sched = JobScheduler::new().unwrap();
+    sched.add(Job::new_async("1/30 * * * * *", move |_uuid, _l| {
         let external_queue = external_queue.clone();
         Box::pin(async move {
             external_queue.remove_old().await;

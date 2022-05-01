@@ -3,19 +3,19 @@ use rocket::fairing::AdHoc;
 use rocket::response::status::NotFound;
 use rocket::response::Responder;
 use rocket::serde::{json::Json, Deserialize, Serialize};
-use rocket::tokio::sync::Mutex;
+
 use rocket::{Request, response, State};
-use std::collections::HashMap;
-use std::convert::Infallible;
-use std::error::Error;
-use std::path::PathBuf;
+
+
+
+
 use std::sync::Arc;
 use rocket::fs::NamedFile;
-use rocket::http::{ContentType, Header, Method};
-use rocket::request::{FromRequest, Outcome};
+use rocket::http::{Header, Method};
+
 use rocket_cors::AllowedOrigins;
-use uuid::Uuid;
-use ytd_rs::{Arg, YoutubeDL};
+
+
 
 
 type Downloads<'r> = &'r State<Arc<DownloadQueue>>;
@@ -53,7 +53,7 @@ impl From<Download> for DownloadResponse {
 
 #[post("/", format = "json", data = "<download_request>")]
 async fn request_download(
-    mut downloads: Downloads<'_>,
+    downloads: Downloads<'_>,
     download_request: Json<DownloadRequest<'_>>,
 ) -> String {
     downloads.add(download_request.link.clone()).await
@@ -62,7 +62,7 @@ async fn request_download(
 #[get("/<download_id>")]
 async fn get_request_download(
     download_id: &str,
-    mut downloads: Downloads<'_>,
+    downloads: Downloads<'_>,
 ) -> Result<Json<DownloadResponse>, NotFound<String>> {
     match downloads.get(download_id).await {
         Some(download) => Ok(Json(download.into())),
@@ -88,7 +88,7 @@ impl<'r> Responder<'r, 'static> for DownloadedFile {
 #[get("/<download_id>/file")]
 async fn get_downloaded_file(
     download_id: &str,
-    mut downloads: Downloads<'_>,
+    downloads: Downloads<'_>,
 ) -> Result<DownloadedFile, NotFound<String>> {
     match downloads.get_file(download_id).await {
         Some(download) => Ok(DownloadedFile { file: download }),

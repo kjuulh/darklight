@@ -1,17 +1,17 @@
-use std::borrow::BorrowMut;
+
 use rocket::tokio::sync::Mutex;
 use std::collections::HashMap;
 use std::error::Error;
-use std::ops::Add;
+
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::thread;
-use std::time::Duration;
+
+
 use chrono::{DateTime, Utc};
 use rocket::fs::NamedFile;
-use rocket::log::private::log;
+
 use rocket::tokio;
-use rocket::tokio::io::AsyncReadExt;
+
 use rocket::tokio::task;
 use uuid::Uuid;
 use ytd_rs::{Arg, YoutubeDL};
@@ -40,7 +40,7 @@ pub struct DownloadQueue {
 impl DownloadQueue {
     pub fn new() -> Self {
         task::spawn(async {
-            tokio::fs::remove_dir_all(format!("./target/output")).await
+            tokio::fs::remove_dir_all("./target/output".to_string()).await
         });
 
         Self {
@@ -78,10 +78,10 @@ impl DownloadQueue {
 
         locked_downloads
             .get_mut(&download_id)
-            .and_then(|download| {
+            .map(|download| {
                 download.state = DownloadState::Done;
                 download.file = file_name;
-                Some(download)
+                download
             });
 
         download_id
@@ -91,8 +91,7 @@ impl DownloadQueue {
         self.downloads
             .lock()
             .await
-            .get(download_id)
-            .and_then(|download| Some(download.clone()))
+            .get(download_id).cloned()
     }
 
     pub async fn get_file(&self, download_id: &'_ str) -> Option<NamedFile> {
@@ -104,12 +103,12 @@ impl DownloadQueue {
             }
         }
 
-        return None;
+        None
     }
 
     pub async fn remove_old(&self) -> Result<(), Box<dyn Error>> {
         println!("remove old files triggered");
-        let mut downloads = self.downloads.lock().await;
+        let downloads = self.downloads.lock().await;
 
         for download in downloads.iter().map(|d| d.1) {
             if is_older(download.insert_time, Utc::now()) {
@@ -125,7 +124,7 @@ impl DownloadQueue {
             }
         }
 
-        return Ok(());
+        Ok(())
     }
 
     async fn clean_up(&self, download: &Download) -> std::io::Result<()> {
