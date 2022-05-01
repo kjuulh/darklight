@@ -113,15 +113,20 @@ impl DownloadQueue {
         println!("remove old files triggered");
         let mut downloads = self.downloads.lock().await;
 
-        for download in downloads.iter().map(|d| d.1) {
+        for download in downloads.clone().iter().map(|d| d.1) {
             if is_older(download.insert_time, Utc::now()) {
                 println!("cleaning up for: {}", download.id);
                 match self.clean_up(download).await {
                     Ok(_) => {
                         println!("cleanup done for: {}", download.id);
 
-                        if let Err (e) = downloads.remove(download.id.as_str()) {
-                            println!("{:?}", e)
+                        match downloads.remove(download.id.as_str())  {
+                            None => {
+                                println!("Could not fine download")
+                            },
+                            Some(_) => {
+                                println!("removed from db")
+                            }
                         }
                     }
                     Err(e) => {
