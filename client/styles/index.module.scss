@@ -64,14 +64,19 @@
 
   > input {
     flex-grow: 1;
-    border: 1px solid #333;
+    border: 1px solid #6d6d6d;
     padding: 0.6rem 0.9rem;
     border-radius: .3rem;
-    transition: outline-color 200ms ease-in-out;
+    color: white;
+    background-color: #202023;
+
+    ::placeholder {
+      color: #fff;
+    }
 
     &:focus {
       outline-offset: 0;
-      outline: #4c4c4c solid 1px;
+      outline: #6d6d6d solid 1px;
     }
   }
 
@@ -83,7 +88,6 @@
     border: none;
     background: #333;
     color: #fff;
-    transition: outline-color 200ms ease-in-out;
 
     &:hover {
       outline-offset: 0;
