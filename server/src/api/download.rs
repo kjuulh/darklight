@@ -88,6 +88,11 @@ async fn get_downloaded_file(
     }
 }
 
+#[get("/healthz")]
+fn get_health_check() -> String {
+    "Ok!".into()
+}
+
 pub fn stage(download_queue: Arc<DownloadQueue>, cfg: Arc<Config>) -> AdHoc {
     let allowed_origins = AllowedOrigins::some_exact(&[cfg.frontend_url.to_string()]);
 
@@ -99,7 +104,7 @@ pub fn stage(download_queue: Arc<DownloadQueue>, cfg: Arc<Config>) -> AdHoc {
 
     AdHoc::on_ignite("downloads", |rocket| async {
         rocket
-            .mount("/download", routes![request_download, get_request_download, get_downloaded_file])
+            .mount("/download", routes![request_download, get_request_download, get_downloaded_file, get_health_check])
             .manage(download_queue)
             .attach(cors.unwrap())
     })
