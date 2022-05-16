@@ -1,20 +1,21 @@
-use rocket::tokio::sync::Mutex;
-use std::collections::HashMap;
-use std::error::Error;
-
-use std::path::PathBuf;
-use std::sync::Arc;
-
-
+use rocket::{
+    tokio::sync::{Mutex},
+    fs::NamedFile,
+    tokio,
+    tokio::task,
+};
+use std::{
+    collections::{HashMap},
+    error::{Error},
+    path::PathBuf,
+    sync::Arc,
+};
+use std::fmt::format;
 use chrono::{DateTime, Utc};
-use rocket::fs::NamedFile;
-
-use rocket::tokio;
-
-use rocket::tokio::task;
 use uuid::Uuid;
-use crate::config::Config;
-use crate::services::yt::{Arg, YoutubeDL};
+use serde::{Serialize, Serializer, Deserialize, Deserializer, de};
+use crate::{config::Config, Publisher, services::yt::{Arg, YoutubeDL}};
+use chrono::serde::ts_milliseconds;
 
 #[derive(Clone)]
 pub enum DownloadState {
@@ -24,22 +25,50 @@ pub enum DownloadState {
     Error,
 }
 
-#[derive(Clone)]
+impl Serialize for DownloadState {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+        serializer.serialize_str(match self {
+            DownloadState::Initiated => "initiated",
+            DownloadState::Downloading => "downloading",
+            DownloadState::Done => "done",
+            DownloadState::Error => "error",
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for DownloadState {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
+        let s = String::deserialize(deserializer)?.to_lowercase();
+        let state = match s.as_str() {
+            "initiated" => DownloadState::Initiated,
+            "downloading" => DownloadState::Downloading,
+            "done" => DownloadState::Done,
+            "error" => DownloadState::Error,
+            other => { return Err(de::Error::custom(format!("Invalid state '{}'", other))); }
+        };
+
+        Ok(state)
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Download {
     pub id: String,
     pub state: DownloadState,
     pub link: String,
     pub file: Option<String>,
-    insert_time: DateTime<Utc>,
+    #[serde(with = "ts_milliseconds")]
+    pub insert_time: DateTime<Utc>,
 }
 
 pub struct DownloadQueue {
     downloads: Arc<Mutex<HashMap<String, Download>>>,
     cfg: Arc<Config>,
+    publisher: Arc<Publisher>,
 }
 
 impl DownloadQueue {
-    pub fn new(cfg: Arc<Config>) -> Self {
+    pub fn new(cfg: Arc<Config>, publisher: Arc<Publisher>) -> Self {
         let config = cfg.clone();
         task::spawn(async move {
             tokio::fs::remove_dir_all(config.storage_path.to_string()).await
@@ -48,46 +77,38 @@ impl DownloadQueue {
         Self {
             cfg: cfg.clone(),
             downloads: Arc::new(Mutex::new(HashMap::new())),
+            publisher,
         }
     }
 
-    pub async fn add(&self, link: &'_ str) -> String {
+    pub async fn add(&self, link: &'_ str) -> Result<String, Box<dyn Error>> {
         let download_id = Uuid::new_v4().to_string();
 
         let downloads = self.downloads.clone();
         let mut locked_downloads = downloads.lock().await;
 
+        let download = Download {
+            id: download_id.clone(),
+            state: DownloadState::Initiated,
+            link: link.to_string(),
+            file: None,
+            insert_time: Utc::now(),
+        };
         locked_downloads.insert(
             download_id.clone(),
-            Download {
-                id: download_id.clone(),
-                state: DownloadState::Initiated,
-                link: link.to_string(),
-                file: None,
-                insert_time: Utc::now(),
-            },
+            download.clone(),
         );
 
-        if let Err(e) = download_media(self.cfg.storage_path.to_string(), link, download_id.as_str()).await {
-            println!("{}", e);
-            return "failure".into();
-        }
-
-        let mut file_name: Option<String> = None;
-        let mut dir = tokio::fs::read_dir(format!("{}/{}", self.cfg.storage_path, download_id)).await.unwrap();
-        if let Some(entry) = dir.next_entry().await.unwrap() {
-            file_name = Some(entry.file_name().to_string_lossy().to_string());
-        }
+        self.publisher.publish("darklight.download".into(), &download).await?;
 
         locked_downloads
             .get_mut(&download_id)
             .map(|download| {
                 download.state = DownloadState::Done;
-                download.file = file_name;
                 download
             });
 
-        download_id
+        Ok(download_id)
     }
 
     pub async fn get(&self, download_id: &'_ str) -> Option<Download> {
@@ -120,10 +141,10 @@ impl DownloadQueue {
                     Ok(_) => {
                         println!("cleanup done for: {}", download.id);
 
-                        match downloads.remove(download.id.as_str())  {
+                        match downloads.remove(download.id.as_str()) {
                             None => {
                                 println!("Could not fine download")
-                            },
+                            }
                             Some(_) => {
                                 println!("removed from db")
                             }
@@ -148,24 +169,6 @@ fn is_older(created: DateTime<Utc>, now: DateTime<Utc>) -> bool {
     created + chrono::Duration::minutes(5) < now
 }
 
-async fn download_media(storage_path: String, link: &'_ str, id: &'_ str) -> Result<(), Box<dyn Error>> {
-    let args = vec![
-        //Arg::new("--quiet"),
-        Arg::new("--progress"),
-        Arg::new("--newline"),
-        Arg::new_with_args("--output", "%(title).90s.%(ext)s"),
-    ];
-
-    let path = PathBuf::from(format!("{storage_path}/{id}"));
-    let ytd = YoutubeDL::new(&path, args, link)?;
-
-    // start download
-    let download = ytd.download().await?;
-
-    // print out the download path
-    println!("Your download: {}", download.output_dir().to_string_lossy());
-    Ok(())
-}
 
 #[cfg(test)]
 mod tests {

@@ -9,8 +9,10 @@ use rocket::fs::NamedFile;
 use rocket::http::{Header, Method};
 use rocket_cors::AllowedOrigins;
 use crate::config::Config;
+use crate::Publisher;
 
 type Downloads<'r> = &'r State<Arc<DownloadQueue>>;
+type NatsPublisher<'r> = &'r State<Arc<Publisher>>;
 
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -45,10 +47,14 @@ impl From<Download> for DownloadResponse {
 
 #[post("/", format = "json", data = "<download_request>")]
 async fn request_download(
-    downloads: Downloads<'_>,
+    publisher: NatsPublisher<'_>,
     download_request: Json<DownloadRequest<'_>>,
 ) -> String {
-    downloads.add(download_request.link.clone()).await
+    if let Err(_) = publisher.publish("darklight.download".into(), download_request.0).await {
+        return "FAILED".into();
+    }
+
+    return "OK".into();
 }
 
 #[get("/<download_id>")]
@@ -88,12 +94,11 @@ async fn get_downloaded_file(
     }
 }
 
-#[get("/healthz")]
-fn get_health_check() -> String {
-    "Ok!".into()
-}
-
-pub fn stage(download_queue: Arc<DownloadQueue>, cfg: Arc<Config>) -> AdHoc {
+pub fn stage(
+    download_queue: Arc<DownloadQueue>,
+    publisher: Arc<Publisher>,
+    cfg: Arc<Config>,
+) -> AdHoc {
     let allowed_origins = AllowedOrigins::some_exact(&[cfg.frontend_url.to_string()]);
 
     let cors = rocket_cors::CorsOptions {
@@ -104,8 +109,9 @@ pub fn stage(download_queue: Arc<DownloadQueue>, cfg: Arc<Config>) -> AdHoc {
 
     AdHoc::on_ignite("downloads", |rocket| async {
         rocket
-            .mount("/download", routes![request_download, get_request_download, get_downloaded_file, get_health_check])
+            .mount("/download", routes![request_download, get_request_download, get_downloaded_file])
             .manage(download_queue)
+            .manage(publisher)
             .attach(cors.unwrap())
     })
 }
