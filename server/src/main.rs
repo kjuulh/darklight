@@ -43,21 +43,19 @@ async fn main() {
                 Box::pin(async move {
                     external_queue.remove_old().await.unwrap();
                 })
-            })
-                .unwrap(),
-        )
-        .unwrap();
+            }).unwrap(),
+        ).unwrap();
 
 
     sched.start().unwrap();
 
-    let worker = Arc::new(Worker::new(subscriber, publisher.clone(), file_downloader.clone()));
+    let worker = Arc::new(Worker::new(subscriber, publisher.clone(), file_downloader.clone(), file_uploader.clone()));
 
     let (_, _) = tokio::join!(
         worker.run(),
         rocket::build()
             .attach(api::stage())
-            .attach(api::download::stage(download_queue, publisher.clone(), cfg.clone()))
+            .attach(api::download::stage(download_queue,cfg.clone()))
             .launch()
     );
 }

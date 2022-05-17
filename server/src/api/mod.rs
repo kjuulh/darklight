@@ -9,6 +9,6 @@ pub fn get_health_check() -> String {
 
 pub fn stage() -> AdHoc {
     AdHoc::on_ignite("base", |rocket| async {
-        rocket.mount("/", routes![get_health_check])
+        rocket.mount("/api", routes![get_health_check])
     })
 }

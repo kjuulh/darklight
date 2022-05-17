@@ -61,13 +61,6 @@ impl DownloadQueue {
 
         self.publisher.publish("darklight.download".into(), &download).await?;
 
-        locked_downloads
-            .get_mut(&download_id)
-            .map(|download| {
-                download.state = DownloadState::Done;
-                download
-            });
-
         Ok(download_id)
     }
 
@@ -78,17 +71,6 @@ impl DownloadQueue {
             .get(download_id).cloned()
     }
 
-    pub async fn get_file(&self, download_id: &'_ str) -> Option<NamedFile> {
-        if let Some(download) = self.downloads.lock().await.get(download_id) {
-            let mut dir = tokio::fs::read_dir(format!("{}/{}", self.cfg.storage_path, download.id)).await.ok()?;
-
-            if let Some(entry) = dir.next_entry().await.ok()? {
-                return NamedFile::open(entry.path()).await.ok();
-            }
-        }
-
-        None
-    }
 
     pub async fn remove_old(&self) -> Result<(), Box<dyn Error>> {
         println!("remove old files triggered");

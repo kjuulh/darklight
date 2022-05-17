@@ -16,7 +16,6 @@ use crate::services::download::download_queue::DownloadQueue;
 use crate::services::download::download_state::DownloadState;
 
 type Downloads<'r> = &'r State<Arc<DownloadQueue>>;
-type NatsPublisher<'r> = &'r State<Arc<Publisher>>;
 
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -51,14 +50,13 @@ impl From<Download> for DownloadResponse {
 
 #[post("/", format = "json", data = "<download_request>")]
 async fn request_download(
-    publisher: NatsPublisher<'_>,
+    downloads: Downloads<'_>,
     download_request: Json<DownloadRequest<'_>>,
 ) -> String {
-    if let Err(_) = publisher.publish("darklight.download".into(), download_request.0).await {
-        return "FAILED".into();
+    match downloads.add(download_request.link).await {
+        Ok(download_id) => download_id,
+        Err(e) => format!("{}", e)
     }
-
-    return "OK".into();
 }
 
 #[get("/<download_id>")]
@@ -92,15 +90,15 @@ async fn get_downloaded_file(
     download_id: &str,
     downloads: Downloads<'_>,
 ) -> Result<DownloadedFile, NotFound<String>> {
-    match downloads.get_file(download_id).await {
-        Some(download) => Ok(DownloadedFile { file: download }),
-        None => Err(NotFound("could not find download".into())),
-    }
+    //   match downloads.get_file(download_id).await {
+    //       Some(download) => Ok(DownloadedFile { file: download }),
+    //       None => Err(NotFound("could not find download".into())),
+    //   }
+    Err(NotFound("not implemented".into()))
 }
 
 pub fn stage(
     download_queue: Arc<DownloadQueue>,
-    publisher: Arc<Publisher>,
     cfg: Arc<Config>,
 ) -> AdHoc {
     let allowed_origins = AllowedOrigins::some_exact(&[cfg.frontend_url.to_string()]);
@@ -113,9 +111,8 @@ pub fn stage(
 
     AdHoc::on_ignite("downloads", |rocket| async {
         rocket
-            .mount("/download", routes![request_download, get_request_download, get_downloaded_file])
+            .mount("/api/download", routes![request_download, get_request_download, get_downloaded_file])
             .manage(download_queue)
-            .manage(publisher)
             .attach(cors.unwrap())
     })
 }

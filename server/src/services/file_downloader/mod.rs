@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::path::PathBuf;
 use std::sync::Arc;
+use rocket::fs::NamedFile;
 
 use crate::config::Config;
 use crate::services::download::download::Download;
@@ -17,24 +18,44 @@ impl FileDownloader {
         }
     }
 
-    pub async fn download(&self, download: &Download) -> Result<(), Box<dyn Error>> {
+    pub async fn download(&self, download: &Download) -> Result<String, Box<dyn Error>> {
         if let Err(e) = download_media(self.cfg.storage_path.to_string(), download.link.as_str(), download.id.as_str()).await {
             println!("{}", e);
             return Err("failure".into());
         }
 
         let mut dir = tokio::fs::read_dir(format!("{}/{}", self.cfg.storage_path, download.id)).await.unwrap();
-        let file_name = if let Some(entry) = dir.next_entry().await.unwrap() {
-            Some(entry.file_name().to_string_lossy().to_string())
-        } else {
-            None
-        };
 
-        if let Some(f) = file_name {
-            println!("downloaded: {}", f)
+        let file_name = dir.next_entry().await.and_then(|entry| {
+            Ok(entry.and_then(|e| {
+                Some(e.file_name().to_string_lossy().to_string())
+            }))
+        });
+
+        if let Ok(Some(f)) = file_name {
+            println!("downloaded: {}", f);
+            Ok(f)
+        } else {
+            Err("could not download file".into())
+        }
+    }
+
+
+    pub async fn get_file(&self, download_id: &'_ str) -> Result<Vec<u8>, Box<dyn Error>> {
+        let mut dir = tokio::fs::read_dir(format!("{}/{}", self.cfg.storage_path, download_id)).await?;
+
+        if let Some(entry) = dir.next_entry().await? {
+            return FileDownloader::read_file(entry.path()).await;
         }
 
-        Ok(())
+        Err("could not find file".into())
+    }
+
+    async fn read_file(file_path: PathBuf) -> Result<Vec<u8>, Box<dyn Error>> {
+        match tokio::fs::read(file_path).await {
+            Ok(f) => Ok(f),
+            Err(e) => Err(e.into())
+        }
     }
 }
 
