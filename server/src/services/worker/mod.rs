@@ -1,9 +1,7 @@
 use std::error::Error;
 use std::sync::Arc;
-use std::time::Duration;
-use tokio::task::JoinHandle;
 use crate::Publisher;
-use crate::services::download::download_queue::Download;
+use crate::services::download::download::Download;
 use crate::services::file_downloader::FileDownloader;
 use crate::services::subscriber::Subscriber;
 
@@ -19,19 +17,23 @@ impl Worker {
     }
 
     pub async fn run(self: Arc<Self>) {
-        self.subscriber.run(|msg| {
+        if let Err(e) = self.subscriber.run(|msg| {
             let s = Arc::clone(&self);
             async move {
                 match parse_to_str(&msg.payload).and_then(serialize_download) {
                     Ok(payload) => {
-                        s.file_downloader.download(&payload).await;
+                        if let Err(e) = s.file_downloader.download(&payload).await {
+                            eprintln!("{}", e)
+                        }
                     }
                     Err(e) => {
                         eprint!("{}", e.to_string());
                     }
                 }
             }
-        }).await;
+        }).await {
+            eprintln!("{}", e)
+        }
     }
 }
 

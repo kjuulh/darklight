@@ -1,8 +1,9 @@
 use std::error::Error;
 use std::path::PathBuf;
 use std::sync::Arc;
+
 use crate::config::Config;
-use crate::services::download::download_queue::{Download, DownloadState};
+use crate::services::download::download::Download;
 use crate::services::yt::{Arg, YoutubeDL};
 
 pub struct FileDownloader {
@@ -22,10 +23,15 @@ impl FileDownloader {
             return Err("failure".into());
         }
 
-        let mut file_name: Option<String> = None;
         let mut dir = tokio::fs::read_dir(format!("{}/{}", self.cfg.storage_path, download.id)).await.unwrap();
-        if let Some(entry) = dir.next_entry().await.unwrap() {
-            file_name = Some(entry.file_name().to_string_lossy().to_string());
+        let file_name = if let Some(entry) = dir.next_entry().await.unwrap() {
+            Some(entry.file_name().to_string_lossy().to_string())
+        } else {
+            None
+        };
+
+        if let Some(f) = file_name {
+            println!("downloaded: {}", f)
         }
 
         Ok(())

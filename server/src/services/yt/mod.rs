@@ -1,15 +1,14 @@
-use thiserror::Error;
-use std::fmt::{Display, Formatter, write};
+use std::fmt::{Display, Formatter};
 use std::fs::{canonicalize, create_dir_all};
 use std::num::ParseIntError;
 use std::path::{Path, PathBuf};
 use std::process::{Output, Stdio};
-use std::time::Duration;
-use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
-use tokio::process::Command;
-use tokio::time::{Instant, sleep};
+
 use lazy_static::lazy_static;
 use regex::Regex;
+use thiserror::Error;
+use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::process::Command;
 
 #[derive(Error, Debug)]
 pub enum YoutubeDLError {
@@ -75,10 +74,6 @@ impl YoutubeDLResult {
             path: path.clone(),
             output: String::new(),
         }
-    }
-
-    pub fn output(&self) -> &str {
-        &self.output
     }
 
     pub fn output_dir(&self) -> &PathBuf {

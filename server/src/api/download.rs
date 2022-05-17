@@ -1,15 +1,19 @@
-use crate::services::download::download_queue::{Download, DownloadQueue, DownloadState};
-use rocket::fairing::AdHoc;
-use rocket::response::status::NotFound;
-use rocket::response::Responder;
-use rocket::serde::{json::Json, Deserialize, Serialize};
-use rocket::{Request, response, State};
 use std::sync::Arc;
+
+use rocket::{Request, response, State};
+use rocket::fairing::AdHoc;
 use rocket::fs::NamedFile;
 use rocket::http::{Header, Method};
+use rocket::response::Responder;
+use rocket::response::status::NotFound;
+use rocket::serde::{Deserialize, json::Json, Serialize};
 use rocket_cors::AllowedOrigins;
+
 use crate::config::Config;
 use crate::Publisher;
+use crate::services::download::download::Download;
+use crate::services::download::download_queue::DownloadQueue;
+use crate::services::download::download_state::DownloadState;
 
 type Downloads<'r> = &'r State<Arc<DownloadQueue>>;
 type NatsPublisher<'r> = &'r State<Arc<Publisher>>;

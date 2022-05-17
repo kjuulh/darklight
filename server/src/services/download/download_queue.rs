@@ -1,74 +1,33 @@
-use rocket::{
-    tokio::sync::{Mutex},
-    fs::NamedFile,
-    tokio,
-    tokio::task,
-};
 use std::{
-    collections::{HashMap},
-    error::{Error},
-    path::PathBuf,
+    collections::HashMap,
+    error::Error,
     sync::Arc,
 };
-use std::fmt::format;
-use chrono::{DateTime, Utc};
+
+use chrono::{
+    DateTime,
+    Utc,
+};
+use rocket::{
+    fs::NamedFile,
+    tokio,
+    tokio::sync::Mutex,
+    tokio::task,
+};
 use uuid::Uuid;
-use serde::{Serialize, Serializer, Deserialize, Deserializer, de};
-use crate::{config::Config, Publisher, services::yt::{Arg, YoutubeDL}};
-use chrono::serde::ts_milliseconds;
 
-#[derive(Clone)]
-pub enum DownloadState {
-    Initiated,
-    Downloading,
-    Done,
-    Error,
-}
-
-impl Serialize for DownloadState {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
-        serializer.serialize_str(match self {
-            DownloadState::Initiated => "initiated",
-            DownloadState::Downloading => "downloading",
-            DownloadState::Done => "done",
-            DownloadState::Error => "error",
-        })
-    }
-}
-
-impl<'de> Deserialize<'de> for DownloadState {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
-        let s = String::deserialize(deserializer)?.to_lowercase();
-        let state = match s.as_str() {
-            "initiated" => DownloadState::Initiated,
-            "downloading" => DownloadState::Downloading,
-            "done" => DownloadState::Done,
-            "error" => DownloadState::Error,
-            other => { return Err(de::Error::custom(format!("Invalid state '{}'", other))); }
-        };
-
-        Ok(state)
-    }
-}
-
-#[derive(Clone, Serialize, Deserialize)]
-pub struct Download {
-    pub id: String,
-    pub state: DownloadState,
-    pub link: String,
-    pub file: Option<String>,
-    #[serde(with = "ts_milliseconds")]
-    pub insert_time: DateTime<Utc>,
-}
+use crate::{config::Config, FileUploader, Publisher, services::download::download_state::DownloadState};
+use crate::services::download::download::Download;
 
 pub struct DownloadQueue {
     downloads: Arc<Mutex<HashMap<String, Download>>>,
     cfg: Arc<Config>,
     publisher: Arc<Publisher>,
+    file_uploader: Arc<FileUploader>,
 }
 
 impl DownloadQueue {
-    pub fn new(cfg: Arc<Config>, publisher: Arc<Publisher>) -> Self {
+    pub fn new(cfg: Arc<Config>, publisher: Arc<Publisher>, file_uploader: Arc<FileUploader>) -> Self {
         let config = cfg.clone();
         task::spawn(async move {
             tokio::fs::remove_dir_all(config.storage_path.to_string()).await
@@ -78,6 +37,7 @@ impl DownloadQueue {
             cfg: cfg.clone(),
             downloads: Arc::new(Mutex::new(HashMap::new())),
             publisher,
+            file_uploader,
         }
     }
 
@@ -173,6 +133,7 @@ fn is_older(created: DateTime<Utc>, now: DateTime<Utc>) -> bool {
 #[cfg(test)]
 mod tests {
     use chrono::Utc;
+
     use crate::services::download::download_queue::is_older;
 
     #[test]

@@ -1,7 +1,8 @@
 use std::error::Error;
 use std::sync::Arc;
+
 use ratsio::NatsClient;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 pub struct Publisher {
     conn: Arc<NatsClient>,

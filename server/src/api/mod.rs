@@ -1,5 +1,4 @@
 use rocket::fairing::AdHoc;
-use rocket_cors::AllowedOrigins;
 
 pub mod download;
 

@@ -1,9 +1,9 @@
 use std::error::Error;
 use std::future::Future;
-use std::io::ErrorKind;
 use std::sync::Arc;
-use ratsio::{NatsClient, NatsClientOptions};
+
 use futures::StreamExt;
+use ratsio::{NatsClient};
 use ratsio::ops::Message;
 
 pub struct Subscriber {

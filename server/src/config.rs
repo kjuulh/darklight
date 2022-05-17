@@ -1,6 +1,4 @@
-use std::env;
 use crate::envconfig::Envconfig;
-
 
 #[derive(Envconfig)]
 pub struct Config {
