@@ -8,15 +8,26 @@ use std::sync::Arc;
 
 use dotenv::dotenv;
 use tokio_cron_scheduler::{Job, JobScheduler};
+use services::events::worker;
+use services::events::worker::download_worker::DownloadWorker;
 
-use crate::envconfig::Envconfig;
-use crate::publisher::Publisher;
-use crate::services::{publisher, worker};
-use crate::services::download::download_queue::DownloadQueue;
-use crate::services::file_downloader::FileDownloader;
-use crate::services::file_uploader::{FileUploader, FileUploaderCfg};
-use crate::services::subscriber::Subscriber;
-use crate::worker::Worker;
+use crate::{
+    envconfig::Envconfig,
+    services::{
+        database::{
+            postgres::{PostgresDb, PostgresDbCfg},
+            repos::downloads::DownloadRepo,
+        },
+        download::download_queue::DownloadQueue,
+        events::{
+            publisher::{Publisher, PublisherCfg},
+            subscriber::subscriber::{Subscriber, SubscriberCfg},
+        },
+        file_downloader::FileDownloader,
+        file_uploader::{FileUploader, FileUploaderCfg},
+    },
+};
+use crate::worker::done_downloading_handler::DoneDownloadingHandler;
 
 mod api;
 mod config;
@@ -27,11 +38,17 @@ async fn main() {
     dotenv().ok();
 
     let cfg: Arc<config::Config> = Arc::new(config::Config::init_from_env().unwrap());
+    let postgres_cfg = Arc::new(PostgresDbCfg::init_from_env().unwrap());
+    let publisher_cfg = Arc::new(PublisherCfg::init_from_env().unwrap());
+    let subscriber_cfg = Arc::new(SubscriberCfg::init_from_env().unwrap());
+
+    let postgres = Arc::new(PostgresDb::new(postgres_cfg).await.unwrap());
+    let download_repo = Arc::new(DownloadRepo::new(postgres));
     let file_uploader_cfg = FileUploaderCfg::init_from_env().unwrap();
     let file_uploader = Arc::new(FileUploader::new(file_uploader_cfg).await.unwrap());
-    let publisher = Arc::new(Publisher::new().await.unwrap());
-    let subscriber = Subscriber::new().await.unwrap();
-    let download_queue = Arc::new(DownloadQueue::new(cfg.clone(), publisher.clone(), file_uploader.clone()));
+    let publisher = Arc::new(Publisher::new(publisher_cfg.clone()).await.unwrap());
+    let subscriber = Arc::new(Subscriber::new(subscriber_cfg.clone()).await.unwrap());
+    let download_queue = Arc::new(DownloadQueue::new(cfg.clone(), publisher.clone(), download_repo.clone()));
     let file_downloader = Arc::new(FileDownloader::new(cfg.clone()));
 
     let external_queue = download_queue.clone();
@@ -47,12 +64,14 @@ async fn main() {
         ).unwrap();
 
 
-    sched.start().unwrap();
+    //sched.start().unwrap();
 
-    let worker = Arc::new(Worker::new(subscriber, publisher.clone(), file_downloader.clone(), file_uploader.clone()));
+    let download_worker = Arc::new(DownloadWorker::new(subscriber.clone(), publisher.clone(), file_downloader.clone(), file_uploader.clone()));
+    let done_downloading_handler = Arc::new(DoneDownloadingHandler::new(subscriber.clone(), download_repo.clone()));
 
-    let (_, _) = tokio::join!(
-        worker.run(),
+    let (_, _, _) = tokio::join!(
+        download_worker.run(),
+        done_downloading_handler.run(),
         rocket::build()
             .attach(api::stage())
             .attach(api::download::stage(download_queue,cfg.clone()))

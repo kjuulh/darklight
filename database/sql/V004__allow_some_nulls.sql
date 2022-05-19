@@ -1,0 +1,1 @@
+ALTER TABLE downloads ALTER COLUMN file DROP NOT NULL;

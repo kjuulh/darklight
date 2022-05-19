@@ -36,5 +36,21 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+
+  crdb:
+    image: cockroachdb/cockroach:latest
+    command: start-single-node --cluster-name=example-single-node --logtostderr=WARNING --log-file-verbosity=WARNING --insecure
+    ports:
+      - "26257:26257"
+      - "8080:8080"
+
+  crdb-init:
+    image: timveil/cockroachdb-remote-client:latest
+    environment:
+      - COCKROACH_HOST=crdb:26257
+      - COCKROACH_INSECURE=true
+      - DATABASE_NAME=darklight
+
 volumes:
   minio_data: {}
+  cockroach_data: {}

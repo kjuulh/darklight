@@ -1,19 +1,28 @@
 use std::sync::Arc;
 
-use rocket::{Request, response, State};
-use rocket::fairing::AdHoc;
-use rocket::fs::NamedFile;
-use rocket::http::{Header, Method};
-use rocket::response::Responder;
-use rocket::response::status::NotFound;
-use rocket::serde::{Deserialize, json::Json, Serialize};
+use rocket::{
+    response::{
+        status::NotFound,
+        Responder,
+        self,
+    },
+    http::{Header, Method},
+    fs::NamedFile,
+    fairing::AdHoc,
+    Request,
+    State,
+    serde::{Deserialize, json::Json, Serialize},
+};
 use rocket_cors::AllowedOrigins;
 
-use crate::config::Config;
-use crate::Publisher;
-use crate::services::download::download::Download;
-use crate::services::download::download_queue::DownloadQueue;
-use crate::services::download::download_state::DownloadState;
+use crate::{
+    config::Config,
+    services::download::{
+        download::Download,
+        download_queue::DownloadQueue,
+        download_state::DownloadState,
+    },
+};
 
 type Downloads<'r> = &'r State<Arc<DownloadQueue>>;
 
@@ -35,7 +44,7 @@ struct DownloadResponse {
 impl From<Download> for DownloadResponse {
     fn from(download: Download) -> Self {
         Self {
-            id: download.id,
+            id: download.id.unwrap(),
             state: match download.state {
                 DownloadState::Initiated => "initiated".into(),
                 DownloadState::Downloading => "downloading".into(),
@@ -65,8 +74,9 @@ async fn get_request_download(
     downloads: Downloads<'_>,
 ) -> Result<Json<DownloadResponse>, NotFound<String>> {
     match downloads.get(download_id).await {
-        Some(download) => Ok(Json(download.into())),
-        None => Err(NotFound("could not find download".into())),
+        Ok(Some(download)) => Ok(Json(download.into())),
+        Ok(None) => Err(NotFound("could not find download".into())),
+        Err(e) => panic!("{}", e),
     }
 }
 

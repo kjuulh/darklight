@@ -33,3 +33,26 @@ impl<'de> Deserialize<'de> for DownloadState {
         Ok(state)
     }
 }
+
+impl DownloadState {
+    pub fn to_string(&self) -> &str {
+        match self {
+            DownloadState::Initiated => "initiated",
+            DownloadState::Downloading => "downloading",
+            DownloadState::Done => "done",
+            DownloadState::Error => "error",
+        }
+    }
+
+    pub fn from_string(s: &str) -> Option<Self> {
+        let state = match s {
+            "initiated" => DownloadState::Initiated,
+            "downloading" => DownloadState::Downloading,
+            "done" => DownloadState::Done,
+            "error" => DownloadState::Error,
+            _ => { return None; }
+        };
+
+        Some(state)
+    }
+}

@@ -15,7 +15,6 @@ pub struct FileUploaderCfg {
 }
 
 pub struct FileUploader {
-    storage: Storage,
     bucket: Bucket,
 }
 
@@ -35,7 +34,6 @@ impl FileUploader {
         }
 
         Ok(Self {
-            storage,
             bucket,
         })
     }

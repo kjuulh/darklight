@@ -1,7 +1,6 @@
 use std::error::Error;
 use std::path::PathBuf;
 use std::sync::Arc;
-use rocket::fs::NamedFile;
 
 use crate::config::Config;
 use crate::services::download::download::Download;
@@ -19,12 +18,12 @@ impl FileDownloader {
     }
 
     pub async fn download(&self, download: &Download) -> Result<String, Box<dyn Error>> {
-        if let Err(e) = download_media(self.cfg.storage_path.to_string(), download.link.as_str(), download.id.as_str()).await {
+        if let Err(e) = download_media(self.cfg.storage_path.to_string(), download.link.as_str(), download.id.as_ref().unwrap().as_str()).await {
             println!("{}", e);
             return Err("failure".into());
         }
 
-        let mut dir = tokio::fs::read_dir(format!("{}/{}", self.cfg.storage_path, download.id)).await.unwrap();
+        let mut dir = tokio::fs::read_dir(format!("{}/{}", self.cfg.storage_path, download.id.as_ref().unwrap())).await.unwrap();
 
         let file_name = dir.next_entry().await.and_then(|entry| {
             Ok(entry.and_then(|e| {

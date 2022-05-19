@@ -9,7 +9,7 @@ edition = "2021"
 rocket = { version = "0.5.0-rc.1", features = ["json"] }
 rocket_cors = "0.6.0-alpha1"
 uuid = { version = "1.0.0", features = ["v4", "fast-rng", "macro-diagnostics"] }
-tokio = { version = "1.18.0", features = ["process"] }
+tokio = { version = "1.18.0", features = ["full"] }
 chrono = { version = "0.4.19", features = ["serde"] }
 tokio-cron-scheduler = "0.7.0"
 envconfig = "0.10.0"
@@ -23,3 +23,4 @@ serde = "1.0.137"
 serde_json = "1.0.81"
 rust-s3 = { version = "0.31.0", features = ["tokio"] }
 dotenv = "0.15.0"
+sqlx = { version = "0.5", features = [ "runtime-tokio-rustls", "postgres", "chrono", "uuid", "migrate", "macros" ] }
