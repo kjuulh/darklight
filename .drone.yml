@@ -13,6 +13,7 @@ steps:
       tags: latest
       context: ./client/
       dockerfile: ./client/Dockerfile
+      cache_from: kasperhermansen/darklight-client:latest
 
   - name: server
     image: plugins/docker
@@ -25,6 +26,7 @@ steps:
       tags: latest
       context: ./server/
       dockerfile: ./server/Dockerfile
+      cache_from: kasperhermansen/darklight-server:latest
 
   - name: send telegram notification
     image: appleboy/drone-telegram
