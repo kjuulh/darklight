@@ -1,21 +1,15 @@
 use std::error::Error;
-
-use s3::{Bucket, Region};
 use s3::creds::Credentials;
-
+use s3::{Bucket, Region};
 use crate::envconfig::Envconfig;
 
 #[derive(Envconfig)]
-pub struct FileUploaderCfg {
+pub struct S3StorageDownloaderCfg {
     #[envconfig(from = "MINIO_ACCESS_KEY")]
     pub access_key: String,
 
     #[envconfig(from = "MINIO_SECRET")]
     pub secret: String,
-}
-
-pub struct FileUploader {
-    bucket: Bucket,
 }
 
 struct Storage {
@@ -24,21 +18,21 @@ struct Storage {
     bucket: String,
 }
 
-impl FileUploader {
-    pub async fn new(cfg: FileUploaderCfg) -> Result<Self, Box<dyn Error>> {
-        let storage = FileUploader::connect(&cfg)?;
-        let bucket = FileUploader::create_bucket(&storage)?;
+pub struct S3StorageDownloader {
+    bucket: Bucket,
+}
 
-        if let Err(_) = bucket.put_object("somefile.txt", "some-file".as_bytes()).await {
-            panic!("{}", "could not put test file in bucket")
-        }
+impl S3StorageDownloader {
+    pub async fn new(cfg: S3StorageDownloaderCfg) -> Result<Self, Box<dyn Error>> {
+        let storage = S3StorageDownloader::connect(&cfg)?;
+        let bucket = S3StorageDownloader::create_bucket(&storage)?;
 
         Ok(Self {
             bucket,
         })
     }
 
-    fn connect(cfg: &FileUploaderCfg) -> Result<Storage, Box<dyn Error>> {
+    fn connect(cfg: &S3StorageDownloaderCfg) -> Result<Storage, Box<dyn Error>> {
         println!("Bootstrapping Minio storage");
         let minio = Storage {
             region: Region::Custom {
@@ -57,7 +51,6 @@ impl FileUploader {
 
         Ok(minio)
     }
-
     fn create_bucket(storage: &Storage) -> Result<Bucket, Box<dyn Error>> {
         println!("Creating Minio bucket connection");
         match Bucket::new(&storage.bucket, storage.region.clone(), storage.credentials.clone()) {
@@ -66,11 +59,12 @@ impl FileUploader {
         }
     }
 
-    pub async fn upload(&self, filename: String, file: &Vec<u8>) -> Result<(), Box<dyn Error>> {
-        match self.bucket.put_object(format!("{}", filename), file).await {
-            Ok((_, 200)) => Ok(()),
-            Ok((_, _)) => Err("failed to upload file".into()),
-            Err(e) => Err(e.into()),
+    pub async fn download_file(&self, file_name: &str) -> Result<Option<Vec<u8>>, Box<dyn Error>> {
+        let (data, code) = self.bucket.get_object(format!("/{}", file_name)).await?;
+        if code != 200 {
+            Ok(None)
+        } else {
+            Ok(Some(data))
         }
     }
 }

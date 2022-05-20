@@ -34,12 +34,13 @@ impl DownloadRepo {
         return Ok(new_download);
     }
 
-    pub async fn finish_download(&self, download_id: &str) -> Result<(), Box<dyn Error>> {
+    pub async fn finish_download(&self, download_id: &str, file_name: &str) -> Result<(), Box<dyn Error>> {
         let mut conn = self.db.pool.acquire().await?;
 
         let _ = sqlx::query_file!(
             "src/services/database/repos/downloads/finish_download.sql",
             DownloadState::Done.to_string(),
+            file_name,
             sqlx::types::Uuid::from_str(download_id)?
         )
             .execute(&mut conn)

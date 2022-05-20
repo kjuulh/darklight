@@ -27,6 +27,7 @@ use crate::{
         file_uploader::{FileUploader, FileUploaderCfg},
     },
 };
+use crate::services::storage_downloader::s3_storage_downloader::{S3StorageDownloader, S3StorageDownloaderCfg};
 use crate::worker::done_downloading_handler::DoneDownloadingHandler;
 
 mod api;
@@ -46,9 +47,11 @@ async fn main() {
     let download_repo = Arc::new(DownloadRepo::new(postgres));
     let file_uploader_cfg = FileUploaderCfg::init_from_env().unwrap();
     let file_uploader = Arc::new(FileUploader::new(file_uploader_cfg).await.unwrap());
+    let s3_storage_downloader_cfg = S3StorageDownloaderCfg::init_from_env().unwrap();
+    let s3_storage_downloader = Arc::new(S3StorageDownloader::new(s3_storage_downloader_cfg).await.unwrap());
     let publisher = Arc::new(Publisher::new(publisher_cfg.clone()).await.unwrap());
     let subscriber = Arc::new(Subscriber::new(subscriber_cfg.clone()).await.unwrap());
-    let download_queue = Arc::new(DownloadQueue::new(cfg.clone(), publisher.clone(), download_repo.clone()));
+    let download_queue = Arc::new(DownloadQueue::new(cfg.clone(), publisher.clone(), download_repo.clone(), s3_storage_downloader.clone()));
     let file_downloader = Arc::new(FileDownloader::new(cfg.clone()));
 
     let external_queue = download_queue.clone();

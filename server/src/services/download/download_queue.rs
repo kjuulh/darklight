@@ -3,6 +3,7 @@ use std::{
     error::Error,
     sync::Arc,
 };
+use std::path::PathBuf;
 
 use chrono::{
     DateTime,
@@ -13,21 +14,23 @@ use rocket::{
     tokio::sync::Mutex,
     tokio::task,
 };
-use uuid::Uuid;
+use rocket::fs::NamedFile;
 
 use crate::{config::Config, DownloadRepo, Publisher, services::download::download_state::DownloadState};
 use crate::services::download::download::Download;
 use crate::services::events::events;
+use crate::services::storage_downloader::s3_storage_downloader::S3StorageDownloader;
 
 pub struct DownloadQueue {
     downloads: Arc<Mutex<HashMap<String, Download>>>,
     cfg: Arc<Config>,
     publisher: Arc<Publisher>,
     download_repo: Arc<DownloadRepo>,
+    storage_downloader: Arc<S3StorageDownloader>,
 }
 
 impl DownloadQueue {
-    pub fn new(cfg: Arc<Config>, publisher: Arc<Publisher>, download_repo: Arc<DownloadRepo>) -> Self {
+    pub fn new(cfg: Arc<Config>, publisher: Arc<Publisher>, download_repo: Arc<DownloadRepo>, storage_downloader: Arc<S3StorageDownloader>) -> Self {
         let config = cfg.clone();
         task::spawn(async move {
             tokio::fs::remove_dir_all(config.storage_path.to_string()).await
@@ -38,6 +41,7 @@ impl DownloadQueue {
             downloads: Arc::new(Mutex::new(HashMap::new())),
             publisher,
             download_repo,
+            storage_downloader,
         }
     }
 
@@ -61,6 +65,29 @@ impl DownloadQueue {
 
     pub async fn get(&self, download_id: &'_ str) -> Result<Option<Download>, Box<dyn Error>> {
         self.download_repo.get_by_download_id(download_id).await
+    }
+
+    pub async fn get_file(&self, download_id: &'_ str) -> Result<Option<(String, Vec<u8>)>, Box<dyn Error>> {
+        let download = self.get(download_id).await?;
+        let file_name = Self::get_file_name(download)?;
+        let data = match self.storage_downloader.download_file(file_name.clone().as_str()).await? {
+            Some(d) => d,
+            None => return Ok(None)
+        };
+        return Ok(Some((file_name.clone(), data)));
+    }
+
+    fn get_file_name(download: Option<Download>) -> Result<String, Box<dyn Error>> {
+        let file_name = match download {
+            Some(d) => match d.file {
+                Some(f) => f,
+                None => return Err("could not find file name".into())
+            },
+            None => {
+                return Err("download is not in the correct state".into());
+            }
+        };
+        Ok(file_name)
     }
 
     pub async fn remove_old(&self) -> Result<(), Box<dyn Error>> {

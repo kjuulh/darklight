@@ -81,30 +81,30 @@ async fn get_request_download(
 }
 
 struct DownloadedFile {
-    file: NamedFile,
+    file_name: String,
+    file_data: Vec<u8>,
 }
 
 impl<'r> Responder<'r, 'static> for DownloadedFile {
     fn respond_to(self, req: &'r Request<'_>) -> response::Result<'static> {
-        let file_path = self.file.path().file_name().unwrap().to_string_lossy().to_string();
-        let mut response = self.file.respond_to(req)?;
+        let mut response = self.file_data.respond_to(req)?;
 
-        response.set_header(Header::new("Content-Disposition", format!("attachment; filename=\"{}\"", file_path)));
+        response.set_header(Header::new("Content-Disposition", format!("attachment; filename=\"{}\"", self.file_name)));
 
         Ok(response)
     }
 }
 
 #[get("/<download_id>/file")]
-async fn get_downloaded_file(
-    download_id: &str,
-    downloads: Downloads<'_>,
+async fn get_downloaded_file<'a>(
+    download_id: &'a str,
+    downloads: Downloads<'a>,
 ) -> Result<DownloadedFile, NotFound<String>> {
-    //   match downloads.get_file(download_id).await {
-    //       Some(download) => Ok(DownloadedFile { file: download }),
-    //       None => Err(NotFound("could not find download".into())),
-    //   }
-    Err(NotFound("not implemented".into()))
+    match downloads.get_file(download_id).await {
+        Ok(Some((file_name, file_data))) => Ok(DownloadedFile { file_name, file_data }),
+        Ok(None) => Err(NotFound("could not find download".into())),
+        Err(..) => Err(NotFound("could not find download".into())),
+    }
 }
 
 pub fn stage(

@@ -28,26 +28,23 @@ impl DoneDownloadingHandler {
         if let Err(e) = self.subscriber.run(events::DOWNLOAD_DONE, Some(events::DONE_DOWNLOADING_GROUP), |msg| {
             let s = Arc::clone(&self);
             async move {
-                match parse_to_str(&msg.payload).and_then(serialize_download) {
-                    Ok(payload) => {
-                        println!("Finished download: {}", payload.download_id);
-                        match s.download_repo.finish_download(payload.download_id).await {
-                            Ok(_) => {
-                                println!("Finished download, database updated: {}", payload.download_id);
-                            }
-                            Err(e) => {
-                                eprint!("Failed to update database: {}", e);
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        eprint!("Failed to parse done download event: {}", e);
-                    }
+                if let Err(e) = s.run_done_downloading(&msg.payload).await {
+                    eprintln!("failed to run done downloading: {}", e)
                 }
             }
         }).await {
             eprintln!("{}", e)
         }
+    }
+
+    async fn run_done_downloading(&self, payload: &Vec<u8>) -> Result<(), Box<dyn Error>> {
+        let download = parse_to_str(payload).and_then(serialize_download)?;
+        println!("Finished download: {}", download.download_id);
+
+        self.download_repo.finish_download(download.download_id, download.file_name).await?;
+        println!("Finished download, database updated: {}", download.download_id);
+
+        Ok(())
     }
 }
 
