@@ -11,4 +11,5 @@ pub struct Download {
     pub file: Option<String>,
     #[serde(with = "ts_milliseconds_option")]
     pub insert_time: Option<DateTime<Utc>>,
+    pub percentage: u32,
 }

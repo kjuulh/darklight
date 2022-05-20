@@ -14,3 +14,21 @@ impl<'a> DoneDownloading<'a> {
         }
     }
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct DownloadStatus<'a> {
+    pub download_id: &'a str,
+    pub percentage: u32,
+}
+
+impl<'a> DownloadStatus<'a> {
+    pub fn new(download_id: &'a str, percentage: u32) -> Self {
+        Self {
+            download_id,
+            percentage,
+        }
+    }
+}
+
+
+

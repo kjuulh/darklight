@@ -49,6 +49,21 @@ impl DownloadRepo {
         Ok(())
     }
 
+    pub async fn update_percentage(&self, download_id: &str, percentage: u32) -> Result<(), Box<dyn Error>> {
+        let mut conn = self.db.pool.acquire().await?;
+
+
+        let _ = sqlx::query_file!(
+            "src/services/database/repos/downloads/update_percentage.sql",
+            i64::from(percentage),
+            sqlx::types::Uuid::from_str(download_id)?
+        )
+            .execute(&mut conn)
+            .await?;
+
+        Ok(())
+    }
+
     pub async fn get_by_download_id(&self, download_id: &str) -> Result<Option<Download>, Box<dyn Error>> {
         let mut conn = self.db.pool.acquire().await?;
         let rec = sqlx::query_file!(
@@ -63,12 +78,14 @@ impl DownloadRepo {
                 Ok(None)
             }
             Some(d) => {
+                let p = d.percentage.unwrap() as u32;
                 let download = Download {
                     id: Some(d.download_id.to_string()),
                     state: DownloadState::from_string(d.state.as_str()).expect("download_state should always be set"),
                     link: d.link,
                     file: d.file,
-                    insert_time: Some(d.insert_time)
+                    insert_time: Some(d.insert_time),
+                    percentage: p,
                 };
 
                 return Ok(Some(download));

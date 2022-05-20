@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 use std::fs::{canonicalize, create_dir_all};
+use std::future::Future;
 use std::num::ParseIntError;
 use std::path::{Path, PathBuf};
 use std::process::{Output, Stdio};
@@ -108,8 +109,12 @@ impl YoutubeDL {
         YoutubeDL::new_multiple_links(dl_path, args, vec![link.to_string()])
     }
 
-    pub async fn download(&self) -> Result<YoutubeDLResult> {
-        let output = self.spawn_youtube_dl().await?;
+    pub async fn download<F, Fut>(&self, progress_update_fn: F) -> Result<YoutubeDLResult>
+        where
+            F: Fn(u32) -> Fut,
+            Fut: Future<Output=()>
+    {
+        let output = self.spawn_youtube_dl(progress_update_fn).await?;
         let mut result = YoutubeDLResult::new(&self.path);
 
         if !output.status.success() {
@@ -120,7 +125,11 @@ impl YoutubeDL {
         Ok(result)
     }
 
-    async fn spawn_youtube_dl(&self) -> Result<Output> {
+    async fn spawn_youtube_dl<F, Fut>(&self, progress_update_fn: F) -> Result<Output>
+        where
+            F: Fn(u32) -> Fut,
+            Fut: Future<Output=()>
+    {
         let mut cmd = Command::new(YOUTUBE_DL_COMMAND);
         cmd.current_dir(&self.path)
             .env("LC_ALL", "en_US.UTF-8")
@@ -147,7 +156,7 @@ impl YoutubeDL {
 
             while let Ok(Some(line)) = stdout_lines.next_line().await {
                 if let Some(Ok(percentage)) = parse_line(line) {
-                    println!("percentage: {}", percentage)
+                    progress_update_fn(percentage).await;
                 }
             }
         }

@@ -39,6 +39,7 @@ struct DownloadResponse {
     link: String,
     state: String,
     file_name: Option<String>,
+    percentage: u32,
 }
 
 impl From<Download> for DownloadResponse {
@@ -53,6 +54,7 @@ impl From<Download> for DownloadResponse {
             },
             link: download.link,
             file_name: download.file,
+            percentage: download.percentage,
         }
     }
 }
@@ -88,9 +90,7 @@ struct DownloadedFile {
 impl<'r> Responder<'r, 'static> for DownloadedFile {
     fn respond_to(self, req: &'r Request<'_>) -> response::Result<'static> {
         let mut response = self.file_data.respond_to(req)?;
-
         response.set_header(Header::new("Content-Disposition", format!("attachment; filename=\"{}\"", self.file_name)));
-
         Ok(response)
     }
 }

@@ -29,6 +29,7 @@ use crate::{
 };
 use crate::services::storage_downloader::s3_storage_downloader::{S3StorageDownloader, S3StorageDownloaderCfg};
 use crate::worker::done_downloading_handler::DoneDownloadingHandler;
+use crate::worker::status_update_handler::StatusUpdateHandler;
 
 mod api;
 mod config;
@@ -52,7 +53,7 @@ async fn main() {
     let publisher = Arc::new(Publisher::new(publisher_cfg.clone()).await.unwrap());
     let subscriber = Arc::new(Subscriber::new(subscriber_cfg.clone()).await.unwrap());
     let download_queue = Arc::new(DownloadQueue::new(cfg.clone(), publisher.clone(), download_repo.clone(), s3_storage_downloader.clone()));
-    let file_downloader = Arc::new(FileDownloader::new(cfg.clone()));
+    let file_downloader = Arc::new(FileDownloader::new(cfg.clone(), publisher.clone()));
 
     let external_queue = download_queue.clone();
     let sched = JobScheduler::new().unwrap();
@@ -71,10 +72,12 @@ async fn main() {
 
     let download_worker = Arc::new(DownloadWorker::new(subscriber.clone(), publisher.clone(), file_downloader.clone(), file_uploader.clone()));
     let done_downloading_handler = Arc::new(DoneDownloadingHandler::new(subscriber.clone(), download_repo.clone()));
+    let status_update_handler = Arc::new(StatusUpdateHandler::new(subscriber.clone(), download_repo.clone()));
 
-    let (_, _, _) = tokio::join!(
+    let (_, _, _, _) = tokio::join!(
         download_worker.run(),
         done_downloading_handler.run(),
+        status_update_handler.run(),
         rocket::build()
             .attach(api::stage())
             .attach(api::download::stage(download_queue,cfg.clone()))

@@ -52,6 +52,7 @@ impl DownloadQueue {
             link: link.to_string(),
             file: None,
             insert_time: Some(Utc::now()),
+            percentage: 0,
         };
 
         let download = self.download_repo.add_download(&download).await?;

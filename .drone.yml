@@ -39,4 +39,4 @@ steps:
       - client
       - server
     when:
-      status: [success, failure]
+      status: [failure]
