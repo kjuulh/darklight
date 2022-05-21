@@ -32,12 +32,11 @@ const DownloadingFile: FC<DownloadingFileProps> = (props) => {
         if (res.state === "initiated") {
           setTimeout(() => {
             fetchFileUrlUpdate(res.id);
-          }, 1000);
+          }, 200);
         }
       })
       .catch(console.error);
   };
-
   useEffect(() => {
     axios
       .get<GetDownloadResponse>(
@@ -67,6 +66,16 @@ const DownloadingFile: FC<DownloadingFileProps> = (props) => {
       >
         {fileUrl.file_name}
       </a>
+      {fileUrl.state === "initiated" && (
+        <div>
+          <div className={styles.progress_bar}>
+            <div
+              className={styles.progress_bar__complete}
+              style={{ width: `${fileUrl.percentage}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
