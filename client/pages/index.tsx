@@ -9,6 +9,7 @@ type GetDownloadResponse = {
     link: string;
     state: string;
     file_name?: string;
+    percentage: number;
 };
 
 interface DownloadingFileProps {
@@ -18,11 +19,34 @@ interface DownloadingFileProps {
 const DownloadingFile: FC<DownloadingFileProps> = (props) => {
     const [fileUrl, setFileUrl] = useState<GetDownloadResponse | undefined>();
 
-    useEffect(() => {
+    const fetchFileUrlUpdate = (downloadId: string) => {
         axios
-            .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/download/${props.id}`)
+            .get<GetDownloadResponse>(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/download/${props.id}`)
             .then((res) => {
                 setFileUrl(res.data);
+                return res.data
+            })
+            .then((res) => {
+                if (res.state === 'initiated') {
+                    setTimeout(() => {
+                        fetchFileUrlUpdate(res.id)
+                    }, 500)
+                }
+            })
+            .catch(console.error);
+    }
+
+    useEffect(() => {
+        axios
+            .get<GetDownloadResponse>(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/download/${props.id}`)
+            .then((res) => {
+                setFileUrl(res.data);
+                return res.data
+            })
+            .then((res) => {
+                if (res.state === 'initiated') {
+                    fetchFileUrlUpdate(res.id)
+                }
             })
             .catch(console.error);
     }, [props.id]);
@@ -34,7 +58,7 @@ const DownloadingFile: FC<DownloadingFileProps> = (props) => {
     return (
         <div>
             <a
-                href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/download/${props.id}/file`}
+                href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/download/${props.id}/file`}
                 download={fileUrl.file_name}
             >
                 {fileUrl.file_name}
@@ -50,7 +74,7 @@ const Home: NextPage = () => {
     const initiateDownload = (downloadLink: string) => {
         axios
             .post(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL}/download`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/download`,
                 {
                     link: downloadLink,
                 },

@@ -109,12 +109,14 @@ impl YoutubeDL {
         YoutubeDL::new_multiple_links(dl_path, args, vec![link.to_string()])
     }
 
-    pub async fn download<F, Fut>(&self, progress_update_fn: F) -> Result<YoutubeDLResult>
+    pub async fn download<F, FutAvailable, FAvailable, Fut>(&self, progress_update_fn: F, file_name_available: FAvailable) -> Result<YoutubeDLResult>
         where
             F: Fn(u32) -> Fut,
-            Fut: Future<Output=()>
+            FAvailable: Fn(String) -> FutAvailable,
+            Fut: Future<Output=()>,
+            FutAvailable: Future<Output=()>
     {
-        let output = self.spawn_youtube_dl(progress_update_fn).await?;
+        let output = self.spawn_youtube_dl(progress_update_fn, file_name_available).await?;
         let mut result = YoutubeDLResult::new(&self.path);
 
         if !output.status.success() {
@@ -125,10 +127,12 @@ impl YoutubeDL {
         Ok(result)
     }
 
-    async fn spawn_youtube_dl<F, Fut>(&self, progress_update_fn: F) -> Result<Output>
+    async fn spawn_youtube_dl<F, FutAvailable, FAvailable, Fut>(&self, progress_update_fn: F, file_name_available: FAvailable) -> Result<Output>
         where
             F: Fn(u32) -> Fut,
-            Fut: Future<Output=()>
+            FAvailable: Fn(String) -> FutAvailable,
+            Fut: Future<Output=()>,
+            FutAvailable: Future<Output=()>
     {
         let mut cmd = Command::new(YOUTUBE_DL_COMMAND);
         cmd.current_dir(&self.path)
@@ -154,7 +158,15 @@ impl YoutubeDL {
             let stdout_reader = BufReader::new(stdout);
             let mut stdout_lines = stdout_reader.lines();
 
+            let mut have_gotten_file_name = false;
             while let Ok(Some(line)) = stdout_lines.next_line().await {
+                if !have_gotten_file_name {
+                    if let Some(file_name) = parse_file_name(line.clone()) {
+                        file_name_available(file_name).await;
+                        have_gotten_file_name = true
+                    }
+                }
+
                 if let Some(Ok(percentage)) = parse_line(line) {
                     progress_update_fn(percentage).await;
                 }
@@ -178,20 +190,49 @@ fn parse_line(line: String) -> Option<core::result::Result<u32, ParseIntError>> 
     Some(str.to_string().parse::<u32>())
 }
 
+fn parse_file_name(line: String) -> Option<String> {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"^\[download\] Destination: ([0-9a-zA-Z\s\.]+)$").unwrap();
+    }
+
+    let capture: regex::Captures = RE.captures(line.as_str())?;
+    if capture.len() != 2 {
+        return None;
+    }
+    let str = &capture[1];
+    Some(str.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::services::yt::parse_line;
+    use crate::services::yt::parse_file_name;
 
     #[test]
-    fn parse() {
+    fn test_parse_line() {
         let percentage = parse_line("[download]  95.4% of ~215.85MiB at  9.61MiB/s ETA 00:01 (frag 144/151)".into());
 
         assert_eq!(percentage, Some(Ok(95)))
     }
 
     #[test]
-    fn parse_get_nothing() {
+    fn test_parse_line_get_nothing() {
         let nothing = parse_line("[download] Got server HTTP error: The read operation timed out. Retrying (attempt 1 of 10) ...".into());
+
+        assert_eq!(nothing, None)
+    }
+
+
+    #[test]
+    fn test_parse_file_name() {
+        let file_name = parse_file_name("[download] Destination: 10 Design Patterns Explained in 10 Minutes.mp4".into());
+
+        assert_eq!(file_name, Some("10 Design Patterns Explained in 10 Minutes.mp4".into()));
+    }
+
+    #[test]
+    fn test_parse_file_name_get_nothing() {
+        let nothing = parse_file_name("[download] No fit: something".into());
 
         assert_eq!(nothing, None)
     }

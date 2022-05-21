@@ -32,3 +32,20 @@ impl<'a> DownloadStatus<'a> {
 
 
 
+#[derive(Serialize, Deserialize)]
+pub struct DownloadFileNameAvailable<'a> {
+    pub download_id: &'a str,
+    pub file_name: String,
+}
+
+impl<'a> DownloadFileNameAvailable<'a> {
+    pub fn new(download_id: &'a str, file_name: String) -> Self {
+        Self {
+            download_id,
+            file_name,
+        }
+    }
+}
+
+
+

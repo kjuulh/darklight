@@ -29,6 +29,7 @@ use crate::{
 };
 use crate::services::storage_downloader::s3_storage_downloader::{S3StorageDownloader, S3StorageDownloaderCfg};
 use crate::worker::done_downloading_handler::DoneDownloadingHandler;
+use crate::worker::file_name_available_handler::FileNameAvailableHandler;
 use crate::worker::status_update_handler::StatusUpdateHandler;
 
 mod api;
@@ -73,11 +74,13 @@ async fn main() {
     let download_worker = Arc::new(DownloadWorker::new(subscriber.clone(), publisher.clone(), file_downloader.clone(), file_uploader.clone()));
     let done_downloading_handler = Arc::new(DoneDownloadingHandler::new(subscriber.clone(), download_repo.clone()));
     let status_update_handler = Arc::new(StatusUpdateHandler::new(subscriber.clone(), download_repo.clone()));
+    let file_name_available_handler = Arc::new(FileNameAvailableHandler::new(subscriber.clone(), download_repo.clone()));
 
-    let (_, _, _, _) = tokio::join!(
+    let (_, _, _, _, _) = tokio::join!(
         download_worker.run(),
         done_downloading_handler.run(),
         status_update_handler.run(),
+        file_name_available_handler.run(),
         rocket::build()
             .attach(api::stage())
             .attach(api::download::stage(download_queue,cfg.clone()))

@@ -8,7 +8,7 @@ use crate::config::Config;
 use crate::Publisher;
 use crate::services::download::download::Download;
 use crate::services::events::events;
-use crate::services::events::models::DownloadStatus;
+use crate::services::events::models::{DownloadFileNameAvailable, DownloadStatus};
 use crate::services::yt::{Arg, YoutubeDL};
 
 pub struct FileDownloader {
@@ -32,6 +32,13 @@ impl FileDownloader {
             |percentage| {
                 async move {
                     self.publisher.publish(events::DOWNLOAD_UPDATE, DownloadStatus::new(download.id.as_ref().unwrap().as_str(), percentage)).await;
+                }
+            },
+            |file_name| {
+                async move {
+                    if let Err(e) = self.publisher.publish(events::DOWNLOAD_FILE_NAME_AVAILABLE, DownloadFileNameAvailable::new(download.id.as_ref().unwrap().as_str(), file_name)).await {
+                        eprintln!("{}", e)
+                    }
                 }
             },
         ).await {
@@ -74,24 +81,26 @@ impl FileDownloader {
     }
 }
 
-async fn download_media<F, Fut>(storage_path: String, link: &'_ str, id: &'_ str, progress_update_fn: F) -> Result<(), Box<dyn Error>>
+async fn download_media<F, Fut, FAvailable, FutAvailable>(storage_path: String, link: &'_ str, id: &'_ str, progress_update_fn: F, file_name_available: FAvailable) -> Result<(), Box<dyn Error>>
     where
         F: Fn(u32) -> Fut,
-        Fut: Future<Output=()> {
+        FAvailable: Fn(String) -> FutAvailable,
+        Fut: Future<Output=()>,
+        FutAvailable: Future<Output=()> {
     let args = vec![
-        //Arg::new("--quiet"),
-        Arg::new("--progress"),
-        Arg::new("--newline"),
-        Arg::new_with_args("--output", "%(title).90s.%(ext)s"),
+//Arg::new("--quiet"),
+Arg::new("--progress"),
+Arg::new("--newline"),
+Arg::new_with_args("--output", "%(title).90s.%(ext)s"),
     ];
 
     let path = PathBuf::from(format!("{storage_path}/{id}"));
     let ytd = YoutubeDL::new(&path, args, link)?;
 
-    // start download
-    let download = ytd.download(progress_update_fn).await?;
+// start download
+    let download = ytd.download(progress_update_fn, file_name_available).await?;
 
-    // print out the download path
+// print out the download path
     println!("Your download: {}", download.output_dir().to_string_lossy());
     Ok(())
 }

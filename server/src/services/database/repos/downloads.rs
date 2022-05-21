@@ -64,6 +64,21 @@ impl DownloadRepo {
         Ok(())
     }
 
+    pub async fn update_file_name(&self, download_id: &str, file_name: String) -> Result<(), Box<dyn Error>> {
+        let mut conn = self.db.pool.acquire().await?;
+
+
+        let _ = sqlx::query_file!(
+            "src/services/database/repos/downloads/update_file_name.sql",
+            file_name.as_str(),
+            sqlx::types::Uuid::from_str(download_id)?
+        )
+            .execute(&mut conn)
+            .await?;
+
+        Ok(())
+    }
+
     pub async fn get_by_download_id(&self, download_id: &str) -> Result<Option<Download>, Box<dyn Error>> {
         let mut conn = self.db.pool.acquire().await?;
         let rec = sqlx::query_file!(
