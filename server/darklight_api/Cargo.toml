@@ -1,0 +1,28 @@
+[package]
+name = "darklight_api"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rocket = { version = "0.5.0-rc.1", features = ["json"] }
+rocket_cors = "0.6.0-alpha1"
+uuid = { version = "1.0.0", features = ["v4", "fast-rng", "macro-diagnostics"] }
+tokio = { version = "1.18.0", features = ["full"] }
+chrono = { version = "0.4.19", features = ["serde"] }
+tokio-cron-scheduler = "0.7.0"
+envconfig = "0.10.0"
+envconfig_derive = "0.10.0"
+futures = "0.3.21"
+serde = "1.0.137"
+serde_json = "1.0.81"
+dotenv = "0.15.0"
+
+darklight_ytd = { path = "../darklight_ytd" }
+darklight_persistence = { path = "../darklight_persistence" }
+darklight_core = { path = "../darklight_core" }
+darklight_storage = { path = "../darklight_storage" }
+darklight_events = { path = "../darklight_events" }
+darklight_handlers = { path = "../darklight_handlers" }
+darklight_app = { path = "../darklight_app" }

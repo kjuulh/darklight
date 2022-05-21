@@ -1,0 +1,12 @@
+[package]
+name = "darklight_ytd"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1.18.0", features = ["full"] }
+lazy_static = "1.4.0"
+regex = { version = "1.5.5" }
+thiserror = "1.0.31"

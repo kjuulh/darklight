@@ -13,9 +13,12 @@ steps:
       tags: latest
       context: ./client/
       dockerfile: ./client/Dockerfile
+      cache_from: kasperhermansen/darklight-client:latest
 
   - name: server
     image: plugins/docker
+    environment:
+      DOCKER_BUILDKIT: 1
     settings:
       username: kasperhermansen
       password:
@@ -25,6 +28,7 @@ steps:
       tags: latest
       context: ./server/
       dockerfile: ./server/Dockerfile
+      cache_from: kasperhermansen/darklight-server:latest
 
   - name: send telegram notification
     image: appleboy/drone-telegram
@@ -37,4 +41,4 @@ steps:
       - client
       - server
     when:
-      status: [success, failure]
+      status: [failure]
