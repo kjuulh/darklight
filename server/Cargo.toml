@@ -1,26 +1,13 @@
-[package]
-name = "darklight"
-version = "0.1.0"
-edition = "2021"
+[workspace]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-rocket = { version = "0.5.0-rc.1", features = ["json"] }
-rocket_cors = "0.6.0-alpha1"
-uuid = { version = "1.0.0", features = ["v4", "fast-rng", "macro-diagnostics"] }
-tokio = { version = "1.18.0", features = ["full"] }
-chrono = { version = "0.4.19", features = ["serde"] }
-tokio-cron-scheduler = "0.7.0"
-envconfig = "0.10.0"
-envconfig_derive = "0.10.0"
-thiserror = "1.0.31"
-regex = { version = "1.5.5" }
-lazy_static = "1.4.0"
-ratsio = "0.4.0"
-futures = "0.3.21"
-serde = "1.0.137"
-serde_json = "1.0.81"
-rust-s3 = { version = "0.31.0", features = ["tokio"] }
-dotenv = "0.15.0"
-sqlx = { version = "0.5", features = [ "runtime-tokio-rustls", "postgres", "chrono", "uuid", "migrate", "macros", "offline" ] }
+members = [
+    "darklight_api",
+    "darklight_ytd",
+    "darklight_persistence",
+    "darklight_core",
+    "darklight_storage",
+    "darklight_events",
+    "darklight_handlers",
+    "darklight_app",
+    "darklight"
+]

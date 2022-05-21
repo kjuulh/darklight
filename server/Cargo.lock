@@ -363,24 +363,131 @@ dependencies = [
 name = "darklight"
 version = "0.1.0"
 dependencies = [
+ "darklight_api",
+ "darklight_app",
+ "darklight_core",
+ "darklight_events",
+ "darklight_handlers",
+ "darklight_persistence",
+ "darklight_storage",
+ "darklight_ytd",
+ "dotenv",
+ "envconfig",
+ "envconfig_derive",
+ "tokio",
+]
+
+[[package]]
+name = "darklight_api"
+version = "0.1.0"
+dependencies = [
  "chrono",
+ "darklight_app",
+ "darklight_core",
+ "darklight_events",
+ "darklight_handlers",
+ "darklight_persistence",
+ "darklight_storage",
+ "darklight_ytd",
  "dotenv",
  "envconfig",
  "envconfig_derive",
  "futures",
- "lazy_static",
- "ratsio",
- "regex",
  "rocket",
  "rocket_cors",
- "rust-s3",
  "serde",
  "serde_json",
- "sqlx",
- "thiserror",
  "tokio",
  "tokio-cron-scheduler",
  "uuid 1.0.0",
+]
+
+[[package]]
+name = "darklight_app"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "darklight_core",
+ "darklight_events",
+ "darklight_persistence",
+ "darklight_storage",
+ "darklight_ytd",
+ "envconfig",
+ "envconfig_derive",
+ "futures",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "darklight_core"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "darklight_events"
+version = "0.1.0"
+dependencies = [
+ "darklight_core",
+ "darklight_storage",
+ "envconfig",
+ "envconfig_derive",
+ "futures",
+ "ratsio",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "darklight_handlers"
+version = "0.1.0"
+dependencies = [
+ "darklight_app",
+ "darklight_core",
+ "darklight_events",
+ "darklight_persistence",
+ "darklight_storage",
+ "futures",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "darklight_persistence"
+version = "0.1.0"
+dependencies = [
+ "darklight_core",
+ "envconfig",
+ "envconfig_derive",
+ "sqlx",
+ "tokio",
+]
+
+[[package]]
+name = "darklight_storage"
+version = "0.1.0"
+dependencies = [
+ "envconfig",
+ "envconfig_derive",
+ "rust-s3",
+ "tokio",
+]
+
+[[package]]
+name = "darklight_ytd"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "regex",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]

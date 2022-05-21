@@ -2,7 +2,7 @@ FROM rust:1.60 as builder
 
 WORKDIR /usr/src/darklight
 
-RUN mkdir -p src && echo "fn main() {}" > ./src/main.rs
+RUN mkdir -p src && echo "fn main() {}" > ./src/lib.rs
 COPY ./Cargo.lock .
 COPY ./Cargo.toml .
 RUN cargo build --release
