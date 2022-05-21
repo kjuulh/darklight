@@ -17,9 +17,9 @@ steps:
 
   - name: server
     image: plugins/docker
+    environment:
+      DOCKER_BUILDKIT: 1
     settings:
-      env:
-        DOCKER_BUILDKIT=1
       username: kasperhermansen
       password:
         from_secret:
