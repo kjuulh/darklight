@@ -8,6 +8,7 @@ use std::process::{Output, Stdio};
 use lazy_static::lazy_static;
 use regex::Regex;
 use thiserror::Error;
+use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 
@@ -160,6 +161,8 @@ impl YoutubeDL {
 
             let mut have_gotten_file_name = false;
             while let Ok(Some(line)) = stdout_lines.next_line().await {
+                println!("{}", line.clone());
+
                 if !have_gotten_file_name {
                     if let Some(file_name) = parse_file_name(line.clone()) {
                         file_name_available(file_name).await;
@@ -168,7 +171,7 @@ impl YoutubeDL {
                 }
 
                 if let Some(Ok(percentage)) = parse_line(line) {
-                    progress_update_fn(percentage).await;
+                   progress_update_fn(percentage).await;
                 }
             }
         }
@@ -192,7 +195,7 @@ fn parse_line(line: String) -> Option<core::result::Result<u32, ParseIntError>> 
 
 fn parse_file_name(line: String) -> Option<String> {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"^\[download\] Destination: ([0-9a-zA-Z\s\.]+)$").unwrap();
+        static ref RE: Regex = Regex::new(r"^\[download\] Destination: (.+)$").unwrap();
     }
 
     let capture: regex::Captures = RE.captures(line.as_str())?;
