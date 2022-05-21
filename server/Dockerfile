@@ -11,7 +11,9 @@ RUN --mount=type=cache,target=/usr/src/darklight/target cargo install --path dar
 
 FROM debian:bullseye-slim
 
-RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+     apt-get update && apt-get install -y python3 python3-pip
 RUN python3 -m pip install -U yt-dlp
 
 COPY --from=builder /usr/local/cargo/bin/darklight /usr/local/bin/darklight
