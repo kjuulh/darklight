@@ -32,7 +32,7 @@ const DownloadingFile: FC<DownloadingFileProps> = (props) => {
         if (res.state === "initiated") {
           setTimeout(() => {
             fetchFileUrlUpdate(res.id);
-          }, 200);
+          }, 2000);
         }
       })
       .catch(console.error);
