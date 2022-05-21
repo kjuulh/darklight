@@ -44,6 +44,18 @@ const DownloadingFile: FC<DownloadingFileProps> = (props) => {
       )
       .then((res) => {
         setFileUrl(res.data);
+        const rawDownloads = localStorage.getItem("downloads");
+        if (rawDownloads) {
+          const downloads = JSON.parse(rawDownloads) as string[];
+          const newDownloads = [
+            ...downloads.filter((d) => d !== res.data.id),
+            res.data.id,
+          ];
+          localStorage.setItem("downloads", JSON.stringify(newDownloads));
+        } else {
+          localStorage.setItem("downloads", JSON.stringify([res.data.id]));
+        }
+
         return res.data;
       })
       .then((res) => {
@@ -83,6 +95,16 @@ const DownloadingFile: FC<DownloadingFileProps> = (props) => {
 const Home: NextPage = () => {
   const [downloadingFiles, setDownloadingFiles] = useState<string[]>([]);
   const [url, setUrl] = useState("");
+
+  useEffect(() => {
+    // see if the user already has downloaded some files before
+    const rawDownloads = localStorage.getItem("downloads");
+    if (rawDownloads) {
+      setDownloadingFiles((df) => {
+        return JSON.parse(rawDownloads) as string[];
+      });
+    }
+  }, []);
 
   const initiateDownload = (downloadLink: string) => {
     axios
