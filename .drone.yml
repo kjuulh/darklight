@@ -18,6 +18,8 @@ steps:
   - name: server
     image: plugins/docker
     settings:
+      env:
+        DOCKER_BUILDKIT=1
       username: kasperhermansen
       password:
         from_secret:

@@ -2,13 +2,12 @@ FROM rust:1.60 as builder
 
 WORKDIR /usr/src/darklight
 
-RUN mkdir -p src && echo "fn main() {}" > ./src/lib.rs
-COPY ./Cargo.lock .
-COPY ./Cargo.toml .
-RUN cargo build --release
-
 COPY . .
-RUN cargo install --path .
+RUN --mount=type=cache,target=/usr/src/darklight/target cargo build --release
+
+
+RUN --mount=type=cache,target=/usr/src/darklight/target cargo install --path darklight
+
 
 FROM debian:bullseye-slim
 

@@ -19,5 +19,3 @@ darklight_storage = { path = "../darklight_storage" }
 darklight_events = { path = "../darklight_events" }
 darklight_handlers = { path = "../darklight_handlers" }
 darklight_app = { path = "../darklight_app" }
-
-
