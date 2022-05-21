@@ -8,7 +8,6 @@ use std::process::{Output, Stdio};
 use lazy_static::lazy_static;
 use regex::Regex;
 use thiserror::Error;
-use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 

@@ -12,6 +12,9 @@ pub struct FileUploaderCfg {
 
     #[envconfig(from = "MINIO_SECRET")]
     pub secret: String,
+
+    #[envconfig(from = "MINIO_URL")]
+    pub url: String,
 }
 
 pub struct FileUploader {
@@ -48,7 +51,7 @@ impl FileUploader {
         let minio = Storage {
             region: Region::Custom {
                 region: "".into(),
-                endpoint: "http://localhost:9000".into(),
+                endpoint: cfg.url.clone(),
 
             },
             credentials: Credentials {

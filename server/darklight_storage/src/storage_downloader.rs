@@ -12,6 +12,9 @@ pub struct S3StorageDownloaderCfg {
 
     #[envconfig(from = "MINIO_SECRET")]
     pub secret: String,
+
+    #[envconfig(from = "MINIO_URL")]
+    pub url: String,
 }
 
 struct Storage {
@@ -44,7 +47,7 @@ impl S3StorageDownloader {
         let minio = Storage {
             region: Region::Custom {
                 region: "".into(),
-                endpoint: "http://localhost:9000".into(),
+                endpoint: cfg.url.clone(),
 
             },
             credentials: Credentials {
