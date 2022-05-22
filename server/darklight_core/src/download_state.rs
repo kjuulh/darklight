@@ -35,7 +35,7 @@ impl<'de> Deserialize<'de> for DownloadState {
 }
 
 impl DownloadState {
-    pub fn to_string(&self) -> &str {
+    pub fn as_str(&self) -> &str {
         match self {
             DownloadState::Initiated => "initiated",
             DownloadState::Downloading => "downloading",

@@ -27,7 +27,7 @@ impl DownloadRepo {
         let mut conn = self.db.pool.acquire().await?;
         let rec = sqlx::query_file!(
             "src/repos/downloads/add_download.sql",
-            download.state.to_string(),
+            download.state.as_str(),
             download.link,
             download.file,
             download.insert_time,
@@ -46,7 +46,7 @@ impl DownloadRepo {
 
         let _ = sqlx::query_file!(
             "src/repos/downloads/finish_download.sql",
-            DownloadState::Done.to_string(),
+            DownloadState::Done.as_str(),
             file_name,
             sqlx::types::Uuid::from_str(download_id)?
         )

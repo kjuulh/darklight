@@ -13,6 +13,7 @@
       <sourceFolder url="file://$MODULE_DIR$/darklight_storage/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/darklight_ytd/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/darklight_graphql/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

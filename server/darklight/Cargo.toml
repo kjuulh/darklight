@@ -12,6 +12,7 @@ envconfig_derive = "0.10.0"
 dotenv = "0.15.0"
 
 darklight_api = { path = "../darklight_api" }
+darklight_graphql = { path = "../darklight_graphql" }
 darklight_ytd = { path = "../darklight_ytd" }
 darklight_persistence = { path = "../darklight_persistence" }
 darklight_core = { path = "../darklight_core" }

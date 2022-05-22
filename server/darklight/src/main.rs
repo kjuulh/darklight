@@ -11,6 +11,7 @@ use darklight_app::download_queue::DownloadQueue;
 use darklight_app::file_downloader::FileDownloader;
 use darklight_events::publisher::Publisher;
 use darklight_events::subscriber::subscriber::Subscriber;
+use darklight_graphql::GraphQLDependencies;
 use darklight_handlers::HandlerDependencies;
 use darklight_persistence::repos::downloads::DownloadRepo;
 use darklight_storage::storage_downloader::S3StorageDownloader;
@@ -29,9 +30,11 @@ async fn main() {
     let file_downloader = Arc::new(FileDownloader::new_from_env(publisher.clone()).unwrap());
     let handler_deps = HandlerDependencies::new(subscriber.clone(), publisher.clone(), file_downloader.clone(), file_uploader.clone(), download_repo.clone());
     let api_deps = ApiDependencies::new_from_env(download_queue.clone()).unwrap();
+    let graphql_deps = GraphQLDependencies::new(subscriber.clone(), download_queue.clone());
 
     let _ = tokio::join!(
         darklight_handlers::run_handlers(handler_deps),
-        darklight_api::build(api_deps)
+        darklight_api::build(api_deps),
+        darklight_graphql::run(graphql_deps)
     );
 }

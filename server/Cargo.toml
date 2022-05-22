@@ -2,6 +2,7 @@
 
 members = [
     "darklight_api",
+    "darklight_graphql",
     "darklight_ytd",
     "darklight_persistence",
     "darklight_core",
