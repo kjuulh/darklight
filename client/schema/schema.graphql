@@ -1,0 +1,37 @@
+# This file was generated based on ".graphqlconfig". Do not edit manually.
+
+schema {
+    query: QueryRoot
+    mutation: MutationRoot
+    subscription: SubscriptionRoot
+}
+
+type Download {
+    file: String
+    id: ID!
+    link: String!
+    percentage: Int!
+    state: String!
+}
+
+type DownloadChanged {
+    download: Download
+    id: ID!
+}
+
+type MutationRoot {
+    requestDownload(link: String!): RequestDownloadResp!
+}
+
+type QueryRoot {
+    getDownload(downloadId: ID!): Download
+    helloWorld: String!
+}
+
+type RequestDownloadResp {
+    id: ID!
+}
+
+type SubscriptionRoot {
+    getDownload(downloadId: ID!): DownloadChanged!
+}
