@@ -35,4 +35,4 @@ yarn-error.log*
 *.tsbuildinfo
 
 sw.js
-workbox-*.js
+workbox-*.jsnode_modules/

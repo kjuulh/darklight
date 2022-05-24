@@ -1,0 +1,7 @@
+query GetDownload($downloadId: ID!) {
+    getDownload(downloadId: $downloadId) {
+        id
+        link
+        percentage
+    }
+}

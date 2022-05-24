@@ -1,0 +1,11 @@
+schema:
+  - 'schema/schema.graphql':
+      noRequire: true
+  - "http://0.0.0.0:8001/"
+documents: ./lib/documents/*.graphql
+generates:
+  ./lib/graphql-operations.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typed-document-node

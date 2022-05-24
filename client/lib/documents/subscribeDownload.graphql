@@ -1,0 +1,10 @@
+subscription SubscribeDownload($downloadId: ID!) {
+    getDownload(downloadId: $downloadId) {
+        download {
+            id
+            link
+            file
+            percentage
+        }
+    }
+}

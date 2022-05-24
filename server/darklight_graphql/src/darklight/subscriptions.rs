@@ -1,5 +1,6 @@
 use std::error::Error;
 use async_graphql::{Context, Object, SimpleObject, Result, ID, Number, Subscription};
+use async_graphql::async_stream::stream;
 use async_graphql::futures_util::{Stream, StreamExt, TryStreamExt};
 use darklight_app::download_queue::DownloadQueue;
 use darklight_events::events::DOWNLOAD_UPDATE;
@@ -36,8 +37,9 @@ impl DownloadChanged {
 impl SubscriptionRoot {
     async fn get_download(&self, ctx: &Context<'_>, download_id: ID) -> impl Stream<Item=DownloadChanged> {
         let stream = ctx.data_unchecked::<GraphQLDependencies>().subscriber.get_stream(DOWNLOAD_UPDATE.to_string()).await;
+        let d_id = download_id.clone();
         let next_stream = StreamExt::filter_map(stream, move |mut msg| {
-            let d = download_id.clone();
+            let d = d_id.clone();
             async move {
                 let payload = msg.payload.as_slice();
                 let download = serde_json::from_slice::<DownloadStatus>(payload).unwrap();
@@ -50,6 +52,10 @@ impl SubscriptionRoot {
             }
         });
 
-        return next_stream;
+        let initial_request = stream! {
+            yield DownloadChanged { id: download_id.clone() }
+        };
+
+        return StreamExt::chain(initial_request, next_stream);
     }
 }
