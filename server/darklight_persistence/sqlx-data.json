@@ -64,6 +64,11 @@
           "name": "percentage",
           "ordinal": 6,
           "type_info": "Int8"
+        },
+        {
+          "name": "requester_id",
+          "ordinal": 7,
+          "type_info": "Uuid"
         }
       ],
       "nullable": [
@@ -73,7 +78,8 @@
         true,
         false,
         false,
-        true
+        true,
+        false
       ],
       "parameters": {
         "Left": [
@@ -118,5 +124,67 @@
       }
     },
     "query": "INSERT INTO downloads (state, link, file, insert_time)\nVALUES ($1, $2, $3, $4)\nRETURNING download_id\n"
+  },
+  "42dcbd8cbf1e942176ff9e19ba0fe38ebd91fa3f91ab272868141be2c101af54": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "state",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "link",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "file",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "insert_time",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "download_id",
+          "ordinal": 5,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "percentage",
+          "ordinal": 6,
+          "type_info": "Int8"
+        },
+        {
+          "name": "requester_id",
+          "ordinal": 7,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "SELECT *\nFROM downloads\nWHERE requester_id = $1\nORDER BY insert_time"
   }
 }

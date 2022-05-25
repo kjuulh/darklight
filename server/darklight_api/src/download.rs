@@ -3,14 +3,9 @@ use std::sync::Arc;
 use rocket::{
     fairing::AdHoc,
     http::{Header, Method},
-    Request,
-    response::{
-        self,
-        Responder,
-        status::NotFound,
-    },
-    serde::{Deserialize, json::Json, Serialize},
-    State,
+    response::{self, status::NotFound, Responder},
+    serde::{json::Json, Deserialize, Serialize},
+    Request, State,
 };
 use rocket_cors::AllowedOrigins;
 
@@ -26,6 +21,7 @@ type Downloads<'r> = &'r State<Arc<DownloadQueue>>;
 #[serde(crate = "rocket::serde")]
 struct DownloadRequest<'r> {
     link: &'r str,
+    requester_id: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -60,9 +56,12 @@ async fn request_download(
     downloads: Downloads<'_>,
     download_request: Json<DownloadRequest<'_>>,
 ) -> String {
-    match downloads.add(download_request.link).await {
+    match downloads
+        .add(download_request.link, download_request.requester_id.clone())
+        .await
+    {
         Ok(download_id) => download_id,
-        Err(e) => format!("{}", e)
+        Err(e) => format!("{}", e),
     }
 }
 
@@ -86,7 +85,10 @@ struct DownloadedFile {
 impl<'r> Responder<'r, 'static> for DownloadedFile {
     fn respond_to(self, req: &'r Request<'_>) -> response::Result<'static> {
         let mut response = self.file_data.respond_to(req)?;
-        response.set_header(Header::new("Content-Disposition", format!("attachment; filename=\"{}\"", self.file_name)));
+        response.set_header(Header::new(
+            "Content-Disposition",
+            format!("attachment; filename=\"{}\"", self.file_name),
+        ));
         Ok(response)
     }
 }
@@ -97,27 +99,31 @@ async fn get_downloaded_file<'a>(
     downloads: Downloads<'a>,
 ) -> Result<DownloadedFile, NotFound<String>> {
     match downloads.get_file(download_id).await {
-        Ok(Some((file_name, file_data))) => Ok(DownloadedFile { file_name, file_data }),
+        Ok(Some((file_name, file_data))) => Ok(DownloadedFile {
+            file_name,
+            file_data,
+        }),
         Ok(None) => Err(NotFound("could not find download".into())),
         Err(..) => Err(NotFound("could not find download".into())),
     }
 }
 
-pub fn stage(
-    download_queue: Arc<DownloadQueue>,
-    cfg: Arc<ApiConfig>,
-) -> AdHoc {
+pub fn stage(download_queue: Arc<DownloadQueue>, cfg: Arc<ApiConfig>) -> AdHoc {
     let allowed_origins = AllowedOrigins::some_exact(&[cfg.frontend_url.to_string()]);
 
     let cors = rocket_cors::CorsOptions {
         allowed_origins,
         allowed_methods: vec![Method::Post].into_iter().map(From::from).collect(),
         ..Default::default()
-    }.to_cors();
+    }
+    .to_cors();
 
     AdHoc::on_ignite("downloads", |rocket| async {
         rocket
-            .mount("/api/download", routes![request_download, get_request_download, get_downloaded_file])
+            .mount(
+                "/api/download",
+                routes![request_download, get_request_download, get_downloaded_file],
+            )
             .manage(download_queue)
             .attach(cors.unwrap())
     })

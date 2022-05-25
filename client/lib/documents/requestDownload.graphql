@@ -1,0 +1,5 @@
+mutation RequestDownload($link: String!, $requesterId: ID!){
+    requestDownload(link: $link, requesterId: $requesterId) {
+        id
+    }
+}

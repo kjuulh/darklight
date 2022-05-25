@@ -3,8 +3,9 @@ subscription SubscribeDownload($downloadId: ID!) {
         download {
             id
             link
-            file
             percentage
+            file
+            state
         }
     }
 }

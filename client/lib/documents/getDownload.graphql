@@ -3,5 +3,7 @@ query GetDownload($downloadId: ID!) {
         id
         link
         percentage
+        file
+        state
     }
 }

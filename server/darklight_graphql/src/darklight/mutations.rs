@@ -1,6 +1,6 @@
-use std::error::Error;
-use async_graphql::{Context, FieldResult, ID, Object, Result, SimpleObject};
 use crate::GraphQLDependencies;
+use async_graphql::{Context, FieldResult, Object, Result, SimpleObject, ID};
+use std::error::Error;
 
 pub struct MutationRoot;
 
@@ -11,12 +11,20 @@ struct RequestDownloadResp {
 
 #[Object]
 impl MutationRoot {
-    async fn request_download(&self, ctx: &Context<'_>, link: String) -> Result<RequestDownloadResp> {
-        match ctx.data_unchecked::<GraphQLDependencies>()
-            .download_queue.add(link.as_str())
-            .await {
+    async fn request_download(
+        &self,
+        ctx: &Context<'_>,
+        link: String,
+        requester_id: ID,
+    ) -> Result<RequestDownloadResp> {
+        match ctx
+            .data_unchecked::<GraphQLDependencies>()
+            .download_queue
+            .add(link.as_str(), requester_id.0)
+            .await
+        {
             Ok(id) => Ok(RequestDownloadResp { id: ID::from(id) }),
-            Err(e) => Err(async_graphql::Error::new(e.to_string()))
+            Err(e) => Err(async_graphql::Error::new(e.to_string())),
         }
     }
 }

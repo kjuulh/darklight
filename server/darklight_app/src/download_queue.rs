@@ -1,13 +1,6 @@
-use std::{
-    collections::HashMap,
-    error::Error,
-    sync::Arc,
-};
+use std::{collections::HashMap, error::Error, sync::Arc};
 
-use chrono::{
-    DateTime,
-    Utc,
-};
+use chrono::{DateTime, Utc};
 use tokio::sync::Mutex;
 use tokio::task;
 
@@ -35,11 +28,16 @@ pub struct DownloadQueue {
 }
 
 impl DownloadQueue {
-    pub fn new(cfg: Arc<DownloadQueueCfg>, publisher: Arc<Publisher>, download_repo: Arc<DownloadRepo>, storage_downloader: Arc<S3StorageDownloader>) -> Self {
+    pub fn new(
+        cfg: Arc<DownloadQueueCfg>,
+        publisher: Arc<Publisher>,
+        download_repo: Arc<DownloadRepo>,
+        storage_downloader: Arc<S3StorageDownloader>,
+    ) -> Self {
         let config = cfg.clone();
-        task::spawn(async move {
-            tokio::fs::remove_dir_all(config.storage_path.to_string()).await
-        });
+        task::spawn(
+            async move { tokio::fs::remove_dir_all(config.storage_path.to_string()).await },
+        );
 
         Self {
             cfg: cfg.clone(),
@@ -50,7 +48,11 @@ impl DownloadQueue {
         }
     }
 
-    pub fn new_from_env(publisher: Arc<Publisher>, download_repo: Arc<DownloadRepo>, storage_downloader: Arc<S3StorageDownloader>) -> Result<Self, Box<dyn Error>> {
+    pub fn new_from_env(
+        publisher: Arc<Publisher>,
+        download_repo: Arc<DownloadRepo>,
+        storage_downloader: Arc<S3StorageDownloader>,
+    ) -> Result<Self, Box<dyn Error>> {
         let download_queue_cfg = Arc::new(DownloadQueueCfg::init_from_env()?);
 
         Ok(Self::new(
@@ -61,7 +63,7 @@ impl DownloadQueue {
         ))
     }
 
-    pub async fn add(&self, link: &'_ str) -> Result<String, Box<dyn Error>> {
+    pub async fn add(&self, link: &'_ str, requester_id: String) -> Result<String, Box<dyn Error>> {
         let download = Download {
             id: None,
             state: DownloadState::Initiated,
@@ -69,6 +71,7 @@ impl DownloadQueue {
             file: None,
             insert_time: Some(Utc::now()),
             percentage: 0,
+            requester_id: Some(requester_id),
         };
 
         let download = self.download_repo.add_download(&download).await?;
@@ -84,12 +87,19 @@ impl DownloadQueue {
         self.download_repo.get_by_download_id(download_id).await
     }
 
-    pub async fn get_file(&self, download_id: &'_ str) -> Result<Option<(String, Vec<u8>)>, Box<dyn Error>> {
+    pub async fn get_file(
+        &self,
+        download_id: &'_ str,
+    ) -> Result<Option<(String, Vec<u8>)>, Box<dyn Error>> {
         let download = self.get(download_id).await?;
         let file_name = Self::get_file_name(download)?;
-        let data = match self.storage_downloader.download_file(file_name.clone().as_str()).await? {
+        let data = match self
+            .storage_downloader
+            .download_file(file_name.clone().as_str())
+            .await?
+        {
             Some(d) => d,
-            None => return Ok(None)
+            None => return Ok(None),
         };
         return Ok(Some((file_name.clone(), data)));
     }
@@ -98,7 +108,7 @@ impl DownloadQueue {
         let file_name = match download {
             Some(d) => match d.file {
                 Some(f) => f,
-                None => return Err("could not find file name".into())
+                None => return Err("could not find file name".into()),
             },
             None => {
                 return Err("download is not in the correct state".into());
@@ -138,14 +148,18 @@ impl DownloadQueue {
     }
 
     async fn clean_up(&self, download: &Download) -> std::io::Result<()> {
-        tokio::fs::remove_dir_all(format!("{}/{}", self.cfg.storage_path, download.id.as_ref().unwrap())).await
+        tokio::fs::remove_dir_all(format!(
+            "{}/{}",
+            self.cfg.storage_path,
+            download.id.as_ref().unwrap()
+        ))
+        .await
     }
 }
 
 fn is_older(created: DateTime<Utc>, now: DateTime<Utc>) -> bool {
     created + chrono::Duration::minutes(5) < now
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -155,7 +169,10 @@ mod tests {
 
     #[test]
     fn datetime() {
-        let older = is_older(Utc::now() - chrono::Duration::minutes(5) - chrono::Duration::seconds(1), Utc::now());
+        let older = is_older(
+            Utc::now() - chrono::Duration::minutes(5) - chrono::Duration::seconds(1),
+            Utc::now(),
+        );
 
         assert_eq!(older, true)
     }

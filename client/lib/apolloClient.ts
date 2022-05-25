@@ -3,7 +3,6 @@ import merge from 'deepmerge';
 import type {GetServerSidePropsContext} from 'next';
 import type {NormalizedCacheObject} from '@apollo/client';
 import {ApolloClient, HttpLink, InMemoryCache, split} from '@apollo/client';
-import {setContext} from '@apollo/client/link/context';
 import isEqual from 'lodash.isequal';
 import {GraphQLWsLink} from "@apollo/client/link/subscriptions";
 import {createClient} from "graphql-ws";
@@ -24,7 +23,6 @@ const createApolloClient = (ctx?: GetServerSidePropsContext) => {
     });
 
     const graphqlWsUri = process.env.NEXT_PUBLIC_GRAPHQL_WS_URI;
-
     if (!graphqlWsUri) {
         throw new Error("could not find ws url")
     }

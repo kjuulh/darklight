@@ -1,8 +1,12 @@
 import type { NextPage } from "next";
 import { FC, useEffect, useState } from "react";
-import axios from "axios";
 
 import styles from "../styles/index.module.scss";
+import { useMutation, useSubscription } from "@apollo/client";
+import {
+  RequestDownloadDocument,
+  SubscribeDownloadDocument,
+} from "../lib/graphql-operations";
 
 type GetDownloadResponse = {
   id: string;
@@ -17,76 +21,39 @@ interface DownloadingFileProps {
 }
 
 const DownloadingFile: FC<DownloadingFileProps> = (props) => {
-  const [fileUrl, setFileUrl] = useState<GetDownloadResponse | undefined>();
+  const { data, loading } = useSubscription(SubscribeDownloadDocument, {
+    variables: { downloadId: props.id },
+  });
 
-  const fetchFileUrlUpdate = (downloadId: string) => {
-    axios
-      .get<GetDownloadResponse>(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/download/${props.id}`
-      )
-      .then((res) => {
-        setFileUrl(res.data);
-        return res.data;
-      })
-      .then((res) => {
-        if (res.state === "initiated") {
-          setTimeout(() => {
-            fetchFileUrlUpdate(res.id);
-          }, 2000);
-        }
-      })
-      .catch(console.error);
-  };
-  useEffect(() => {
-    axios
-      .get<GetDownloadResponse>(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/download/${props.id}`
-      )
-      .then((res) => {
-        setFileUrl(res.data);
-        const rawDownloads = localStorage.getItem("downloads");
-        if (rawDownloads) {
-          const downloads = JSON.parse(rawDownloads) as string[];
-          const newDownloads = [
-            ...downloads.filter((d) => d !== res.data.id),
-            res.data.id,
-          ];
-          localStorage.setItem("downloads", JSON.stringify(newDownloads));
-        } else {
-          localStorage.setItem("downloads", JSON.stringify([res.data.id]));
-        }
-
-        return res.data;
-      })
-      .then((res) => {
-        if (res.state === "initiated") {
-          fetchFileUrlUpdate(res.id);
-        }
-      })
-      .catch(console.error);
-  }, [props.id]);
-
-  if (!fileUrl) {
+  if (loading) {
     return <div>Loading...</div>;
   }
+
+  if (!data?.getDownload?.download) {
+    return <div>File was not found</div>;
+  }
+
+  const { download } = data.getDownload;
 
   return (
     <div>
       <a
-        href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/download/${props.id}/file`}
-        download={fileUrl.file_name}
+        href={`${process.env.NEXT_PUBLIC_BACKEND_URI}api/download/${props.id}/file`}
+        download={download.file}
       >
-        {fileUrl.file_name}
+        {download.file}
       </a>
-      {fileUrl.state === "initiated" && (
-        <div>
-          <div className={styles.progress_bar}>
-            <div
-              className={styles.progress_bar__complete}
-              style={{ width: `${fileUrl.percentage}%` }}
-            ></div>
+      {download.state === "initiated" && (
+        <>
+          <div>
+            <div className={styles.progress_bar}>
+              <div
+                className={styles.progress_bar__complete}
+                style={{ width: `${download.percentage}%` }}
+              ></div>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
@@ -95,6 +62,10 @@ const DownloadingFile: FC<DownloadingFileProps> = (props) => {
 const Home: NextPage = () => {
   const [downloadingFiles, setDownloadingFiles] = useState<string[]>([]);
   const [url, setUrl] = useState("");
+
+  const [requestDownload, { data, loading, error }] = useMutation(
+    RequestDownloadDocument
+  );
 
   useEffect(() => {
     // see if the user already has downloaded some files before
@@ -107,16 +78,20 @@ const Home: NextPage = () => {
   }, []);
 
   const initiateDownload = (downloadLink: string) => {
-    axios
-      .post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/download`,
-        {
-          link: downloadLink,
-        },
-        {}
-      )
+    requestDownload({
+      variables: {
+        link: downloadLink,
+        requesterId: "e3ff46f2-d4ae-4fa2-abc1-8960a23a34f3",
+      },
+    })
       .then((res) => {
-        setDownloadingFiles((files) => [...files, res.data]);
+        console.log("downloaded" + downloadLink);
+        return res.data?.requestDownload;
+      })
+      .then((data) => {
+        if (data) {
+          setDownloadingFiles((files) => [...files, data.id]);
+        }
       })
       .catch(console.error);
   };
@@ -164,9 +139,9 @@ const Home: NextPage = () => {
             <div>
               <ul>
                 {downloadingFiles.map((df, i) => (
-                  <li key={i}>
+                  <div key={i}>
                     <DownloadingFile id={df} />
-                  </li>
+                  </div>
                 ))}
               </ul>
             </div>

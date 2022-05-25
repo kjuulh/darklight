@@ -20,7 +20,7 @@ type DownloadChanged {
 }
 
 type MutationRoot {
-    requestDownload(link: String!): RequestDownloadResp!
+    requestDownload(link: String!, requesterId: ID!): RequestDownloadResp!
 }
 
 type QueryRoot {
