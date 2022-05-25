@@ -3,8 +3,8 @@ use std::future::Future;
 use std::sync::Arc;
 
 use futures::{Stream, StreamExt};
-use ratsio::{NatsClient, NatsClientOptions, RatsioError};
-use ratsio::ops::{Message, Op};
+use ratsio::{NatsClient};
+use ratsio::ops::{Message};
 
 use crate::envconfig::Envconfig;
 
@@ -54,7 +54,7 @@ impl Subscriber {
     }
 
     pub async fn get_stream(&self, subject: String) -> impl Stream<Item=Message> + Send + Sync {
-        let (_, mut sub) = self.conn.subscribe(subject).await.unwrap();
+        let (_, sub) = self.conn.subscribe(subject).await.unwrap();
         sub
     }
 }

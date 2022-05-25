@@ -1,12 +1,12 @@
 mod darklight;
 
 use std::sync::Arc;
-use async_graphql::{EmptyMutation, EmptySubscription, Request, Response, Schema};
+use async_graphql::{Request, Response, Schema};
 use async_graphql::http::{GraphQLPlaygroundConfig, playground_source};
 use axum::{Extension, http, Json, Router};
 use axum::response::{Html, IntoResponse};
 use axum::routing::get;
-use async_graphql_axum::{GraphQLRequest, GraphQLResponse, GraphQLSubscription};
+use async_graphql_axum::{GraphQLSubscription};
 use axum::headers::HeaderValue;
 use axum::http::Method;
 use darklight_app::download_queue::DownloadQueue;

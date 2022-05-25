@@ -62,11 +62,7 @@ impl FileDownloader {
 
         let mut dir = tokio::fs::read_dir(format!("{}/{}", self.cfg.storage_path, download.id.as_ref().unwrap())).await.unwrap();
 
-        let file_name = dir.next_entry().await.and_then(|entry| {
-            Ok(entry.and_then(|e| {
-                Some(e.file_name().to_string_lossy().to_string())
-            }))
-        });
+        let file_name = dir.next_entry().await.map(|entry| entry.map(|e| e.file_name().to_string_lossy().to_string()));
 
         if let Ok(Some(f)) = file_name {
             println!("downloaded: {}", f);

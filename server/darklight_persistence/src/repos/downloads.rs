@@ -1,5 +1,5 @@
 use sqlx::types::chrono::{DateTime, Utc};
-use sqlx::types::{chrono, Uuid};
+use sqlx::types::{Uuid};
 use std::error::Error;
 use std::str::FromStr;
 use std::sync::Arc;

@@ -1,8 +1,8 @@
-use std::error::Error;
-use async_graphql::{Context, Object, SimpleObject, Result, ID, Number, Subscription};
+
+use async_graphql::{Context, Object, Result, ID, Subscription};
 use async_graphql::async_stream::stream;
 use async_graphql::futures_util::{Stream, StreamExt, TryStreamExt};
-use darklight_app::download_queue::DownloadQueue;
+
 use darklight_events::events::DOWNLOAD_UPDATE;
 use darklight_events::models::DownloadStatus;
 use crate::darklight::queries;
@@ -38,7 +38,7 @@ impl SubscriptionRoot {
     async fn get_download(&self, ctx: &Context<'_>, download_id: ID) -> impl Stream<Item=DownloadChanged> {
         let stream = ctx.data_unchecked::<GraphQLDependencies>().subscriber.get_stream(DOWNLOAD_UPDATE.to_string()).await;
         let d_id = download_id.clone();
-        let next_stream = StreamExt::filter_map(stream, move |mut msg| {
+        let next_stream = StreamExt::filter_map(stream, move |msg| {
             let d = d_id.clone();
             async move {
                 let payload = msg.payload.as_slice();
@@ -56,6 +56,6 @@ impl SubscriptionRoot {
             yield DownloadChanged { id: download_id.clone() }
         };
 
-        return StreamExt::chain(initial_request, next_stream);
+        StreamExt::chain(initial_request, next_stream)
     }
 }

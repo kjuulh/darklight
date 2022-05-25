@@ -31,7 +31,7 @@ impl DownloadWorker {
                     Ok(payload) => {
                         match s.file_downloader.download(&payload).await {
                             Ok(file_name) => {
-                                match s.file_downloader.get_file(&payload.id.as_ref().unwrap()).await {
+                                match s.file_downloader.get_file(payload.id.as_ref().unwrap()).await {
                                     Ok(content) => match s.file_uploader.upload(file_name.clone(), &content).await {
                                         Ok(_) => {
                                             if let Err(e) = s.publisher.publish(events::DOWNLOAD_DONE, DoneDownloading::new(payload.id.as_ref().unwrap().as_str(), file_name.as_str())).await {

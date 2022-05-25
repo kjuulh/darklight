@@ -36,11 +36,11 @@ impl DownloadQueue {
     ) -> Self {
         let config = cfg.clone();
         task::spawn(
-            async move { tokio::fs::remove_dir_all(config.storage_path.to_string()).await },
+            async move { tokio::fs::remove_dir_all(&config.storage_path).await },
         );
 
         Self {
-            cfg: cfg.clone(),
+            cfg,
             downloads: Arc::new(Mutex::new(HashMap::new())),
             publisher,
             download_repo,
@@ -101,7 +101,7 @@ impl DownloadQueue {
             Some(d) => d,
             None => return Ok(None),
         };
-        return Ok(Some((file_name.clone(), data)));
+        Ok(Some((file_name.clone(), data)))
     }
 
     fn get_file_name(download: Option<Download>) -> Result<String, Box<dyn Error>> {

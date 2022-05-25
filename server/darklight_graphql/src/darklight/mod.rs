@@ -2,7 +2,7 @@ mod queries;
 mod mutations;
 mod subscriptions;
 
-use async_graphql::{EmptyMutation, EmptySubscription, Schema};
+use async_graphql::{Schema};
 
 pub use queries::QueryRoot;
 pub use mutations::MutationRoot;

@@ -1,5 +1,5 @@
-use async_graphql::{Context, Object, SimpleObject, Result, ID, Number, Error};
-use darklight_app::download_queue::DownloadQueue;
+use async_graphql::{Context, Object, SimpleObject, Result, ID};
+
 use crate::GraphQLDependencies;
 
 #[derive(SimpleObject)]
@@ -14,7 +14,7 @@ pub struct Download {
 impl TryFrom<darklight_core::download::Download> for Download {
     type Error = async_graphql::Error;
     fn try_from(d: darklight_core::download::Download) -> std::result::Result<Self, Self::Error> {
-        if let None = d.id {
+        if d.id.is_none() {
             return Err("id is missing from download".into());
         }
 

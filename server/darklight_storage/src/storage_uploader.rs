@@ -75,7 +75,7 @@ impl FileUploader {
     }
 
     pub async fn upload(&self, filename: String, file: &Vec<u8>) -> Result<(), Box<dyn Error>> {
-        match self.bucket.put_object(format!("{}", filename), file).await {
+        match self.bucket.put_object(&filename, file).await {
             Ok((_, 200)) => Ok(()),
             Ok((_, _)) => Err("failed to upload file".into()),
             Err(e) => Err(e.into()),
