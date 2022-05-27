@@ -50,13 +50,18 @@ pub async fn run(deps: GraphQLDependencies) {
         .data(deps)
         .finish();
 
+    let cors = vec![
+        "https://darklight.front.kjuulh.io/".parse().unwrap(),
+        "http://localhost:3000".parse().unwrap(),
+    ];
+
     let app = Router::new()
         .route("/", get(graphql_playground).post(graphql_handler))
         .route("/ws", GraphQLSubscription::new(schema.clone()))
         .layer(Extension(schema))
         .layer(
             CorsLayer::new()
-                .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
+                .allow_origin(cors)
                 .allow_headers([http::header::CONTENT_TYPE])
                 .allow_methods([Method::GET, Method::POST, Method::OPTIONS]),
         );
