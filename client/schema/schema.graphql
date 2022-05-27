@@ -25,6 +25,7 @@ type MutationRoot {
 
 type QueryRoot {
     getDownload(downloadId: ID!): Download
+    getDownloads(requesterId: ID!): [Download!]!
     helloWorld: String!
 }
 

@@ -26,11 +26,28 @@ async fn main() {
     let s3_storage_downloader = Arc::new(S3StorageDownloader::new_from_env().await.unwrap());
     let publisher = Arc::new(Publisher::new_from_env().await.unwrap());
     let subscriber = Arc::new(Subscriber::new_from_env().await.unwrap());
-    let download_queue = Arc::new(DownloadQueue::new_from_env(publisher.clone(), download_repo.clone(), s3_storage_downloader.clone()).unwrap());
+    let download_queue = Arc::new(
+        DownloadQueue::new_from_env(
+            publisher.clone(),
+            download_repo.clone(),
+            s3_storage_downloader.clone(),
+        )
+        .unwrap(),
+    );
     let file_downloader = Arc::new(FileDownloader::new_from_env(publisher.clone()).unwrap());
-    let handler_deps = HandlerDependencies::new(subscriber.clone(), publisher.clone(), file_downloader.clone(), file_uploader.clone(), download_repo.clone());
+    let handler_deps = HandlerDependencies::new(
+        subscriber.clone(),
+        publisher.clone(),
+        file_downloader.clone(),
+        file_uploader.clone(),
+        download_repo.clone(),
+    );
     let api_deps = ApiDependencies::new_from_env(download_queue.clone()).unwrap();
-    let graphql_deps = GraphQLDependencies::new(subscriber.clone(), download_queue.clone());
+    let graphql_deps = GraphQLDependencies::new(
+        subscriber.clone(),
+        download_queue.clone(),
+        download_repo.clone(),
+    );
 
     let _ = tokio::join!(
         darklight_handlers::run_handlers(handler_deps),

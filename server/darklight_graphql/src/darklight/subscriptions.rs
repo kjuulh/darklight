@@ -1,12 +1,11 @@
-
-use async_graphql::{Context, Object, Result, ID, Subscription};
 use async_graphql::async_stream::stream;
-use async_graphql::futures_util::{Stream, StreamExt, TryStreamExt};
+use async_graphql::futures_util::{Stream, StreamExt};
+use async_graphql::{Context, Object, Result, Subscription, ID};
 
-use darklight_events::events::DOWNLOAD_UPDATE;
-use darklight_events::models::DownloadStatus;
 use crate::darklight::queries;
 use crate::GraphQLDependencies;
+use darklight_events::events::DOWNLOAD_UPDATE;
+use darklight_events::models::DownloadStatus;
 
 pub struct SubscriptionRoot;
 
@@ -21,22 +20,34 @@ impl DownloadChanged {
     }
 
     async fn download(&self, ctx: &Context<'_>) -> Result<Option<queries::Download>> {
-        match ctx.data_unchecked::<GraphQLDependencies>().download_queue.get(self.id.as_str()).await {
+        match ctx
+            .data_unchecked::<GraphQLDependencies>()
+            .download_queue
+            .get(self.id.as_str())
+            .await
+        {
             Ok(Some(d)) => match d.try_into() {
                 Ok(d) => Ok(Some(d)),
-                Err(e) => Err(e)
+                Err(e) => Err(e),
             },
             Ok(None) => Ok(None),
-            Err(e) => Err(async_graphql::Error::new(e.to_string()))
+            Err(e) => Err(async_graphql::Error::new(e.to_string())),
         }
     }
 }
 
-
 #[Subscription]
 impl SubscriptionRoot {
-    async fn get_download(&self, ctx: &Context<'_>, download_id: ID) -> impl Stream<Item=DownloadChanged> {
-        let stream = ctx.data_unchecked::<GraphQLDependencies>().subscriber.get_stream(DOWNLOAD_UPDATE.to_string()).await;
+    async fn get_download(
+        &self,
+        ctx: &Context<'_>,
+        download_id: ID,
+    ) -> impl Stream<Item = DownloadChanged> {
+        let stream = ctx
+            .data_unchecked::<GraphQLDependencies>()
+            .subscriber
+            .get_stream(DOWNLOAD_UPDATE.to_string())
+            .await;
         let d_id = download_id.clone();
         let next_stream = StreamExt::filter_map(stream, move |msg| {
             let d = d_id.clone();

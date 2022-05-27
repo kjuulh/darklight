@@ -1,4 +1,5 @@
-use async_graphql::{Context, Object, SimpleObject, Result, ID};
+use async_graphql::{Context, Object, Result, SimpleObject, ID};
+use std::error::Error;
 
 use crate::GraphQLDependencies;
 
@@ -37,13 +38,35 @@ impl QueryRoot {
     }
 
     async fn get_download(&self, ctx: &Context<'_>, download_id: ID) -> Result<Option<Download>> {
-        match ctx.data_unchecked::<GraphQLDependencies>().download_queue.get(download_id.as_str()).await {
+        match ctx
+            .data_unchecked::<GraphQLDependencies>()
+            .download_queue
+            .get(download_id.as_str())
+            .await
+        {
             Ok(Some(d)) => match d.try_into() {
                 Ok(d) => Ok(Some(d)),
-                Err(e) => Err(e)
+                Err(e) => Err(e),
             },
             Ok(None) => Ok(None),
-            Err(e) => Err(async_graphql::Error::new(e.to_string()))
+            Err(e) => Err(async_graphql::Error::new(e.to_string())),
+        }
+    }
+
+    async fn get_downloads(&self, ctx: &Context<'_>, requester_id: ID) -> Result<Vec<Download>> {
+        match ctx
+            .data_unchecked::<GraphQLDependencies>()
+            .download_repo
+            .get_downloads_by_requester(requester_id.as_str())
+            .await
+        {
+            Ok(ds) => Ok(ds
+                .into_iter()
+                .map(|d| d.try_into())
+                .filter(|d| d.is_ok())
+                .map(|d| d.unwrap())
+                .collect::<Vec<Download>>()),
+            Err(e) => Err(async_graphql::Error::new(e.to_string())),
         }
     }
 }

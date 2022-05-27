@@ -1,0 +1,9 @@
+query GetDownloads($requesterId: ID!) {
+    getDownloads(requesterId: $requesterId) {
+        id
+        link
+        percentage
+        file
+        state
+    }
+}

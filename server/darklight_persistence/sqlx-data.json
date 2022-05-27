@@ -102,29 +102,6 @@
     },
     "query": "UPDATE downloads\nSET percentage = $1\nWHERE download_id = $2\n"
   },
-  "3957dcf867a97b53f5df46e90cc9f4a7b3aa44a88c58d9d38507fb7a66e7ad7a": {
-    "describe": {
-      "columns": [
-        {
-          "name": "download_id",
-          "ordinal": 0,
-          "type_info": "Uuid"
-        }
-      ],
-      "nullable": [
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Varchar",
-          "Text",
-          "Text",
-          "Timestamptz"
-        ]
-      }
-    },
-    "query": "INSERT INTO downloads (state, link, file, insert_time)\nVALUES ($1, $2, $3, $4)\nRETURNING download_id\n"
-  },
   "42dcbd8cbf1e942176ff9e19ba0fe38ebd91fa3f91ab272868141be2c101af54": {
     "describe": {
       "columns": [
@@ -186,5 +163,29 @@
       }
     },
     "query": "SELECT *\nFROM downloads\nWHERE requester_id = $1\nORDER BY insert_time"
+  },
+  "7d772879cefe5aa104775b3cce10ea0b099a58f0537f995bbc61c0313c17c438": {
+    "describe": {
+      "columns": [
+        {
+          "name": "download_id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Text",
+          "Text",
+          "Timestamptz",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "INSERT INTO downloads (state, link, file, insert_time, requester_id)\nVALUES ($1, $2, $3, $4, $5)\nRETURNING download_id\n"
   }
 }

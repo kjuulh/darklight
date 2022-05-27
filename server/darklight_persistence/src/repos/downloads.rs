@@ -1,5 +1,5 @@
 use sqlx::types::chrono::{DateTime, Utc};
-use sqlx::types::{Uuid};
+use sqlx::types::Uuid;
 use std::error::Error;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -42,6 +42,13 @@ impl DownloadRepo {
             download.link,
             download.file,
             download.insert_time,
+            Uuid::from_str(
+                download
+                    .requester_id
+                    .as_ref()
+                    .ok_or("request id was not found")?
+                    .as_str()
+            )?,
         )
         .fetch_one(&mut conn)
         .await?;
@@ -156,7 +163,7 @@ impl DownloadRepo {
         let ds = rec
             .into_iter()
             .map(|d| Download {
-                id: Some(d.id.to_string()),
+                id: Some(d.download_id.to_string()),
                 state: DownloadState::from_string(d.state.as_str()).unwrap(),
                 link: d.link,
                 file: d.file,

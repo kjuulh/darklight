@@ -42,12 +42,18 @@ export type MutationRootRequestDownloadArgs = {
 export type QueryRoot = {
   __typename?: 'QueryRoot';
   getDownload?: Maybe<Download>;
+  getDownloads: Array<Download>;
   helloWorld: Scalars['String'];
 };
 
 
 export type QueryRootGetDownloadArgs = {
   downloadId: Scalars['ID'];
+};
+
+
+export type QueryRootGetDownloadsArgs = {
+  requesterId: Scalars['ID'];
 };
 
 export type RequestDownloadResp = {
@@ -72,6 +78,13 @@ export type GetDownloadQueryVariables = Exact<{
 
 export type GetDownloadQuery = { __typename?: 'QueryRoot', getDownload?: { __typename?: 'Download', id: string, link: string, percentage: number, file?: string | null, state: string } | null };
 
+export type GetDownloadsQueryVariables = Exact<{
+  requesterId: Scalars['ID'];
+}>;
+
+
+export type GetDownloadsQuery = { __typename?: 'QueryRoot', getDownloads: Array<{ __typename?: 'Download', id: string, link: string, percentage: number, file?: string | null, state: string }> };
+
 export type RequestDownloadMutationVariables = Exact<{
   link: Scalars['String'];
   requesterId: Scalars['ID'];
@@ -89,5 +102,6 @@ export type SubscribeDownloadSubscription = { __typename?: 'SubscriptionRoot', g
 
 
 export const GetDownloadDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetDownload"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"downloadId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getDownload"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"downloadId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"downloadId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"link"}},{"kind":"Field","name":{"kind":"Name","value":"percentage"}},{"kind":"Field","name":{"kind":"Name","value":"file"}},{"kind":"Field","name":{"kind":"Name","value":"state"}}]}}]}}]} as unknown as DocumentNode<GetDownloadQuery, GetDownloadQueryVariables>;
+export const GetDownloadsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetDownloads"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"requesterId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getDownloads"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"requesterId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"requesterId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"link"}},{"kind":"Field","name":{"kind":"Name","value":"percentage"}},{"kind":"Field","name":{"kind":"Name","value":"file"}},{"kind":"Field","name":{"kind":"Name","value":"state"}}]}}]}}]} as unknown as DocumentNode<GetDownloadsQuery, GetDownloadsQueryVariables>;
 export const RequestDownloadDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"RequestDownload"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"link"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"requesterId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"requestDownload"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"link"},"value":{"kind":"Variable","name":{"kind":"Name","value":"link"}}},{"kind":"Argument","name":{"kind":"Name","value":"requesterId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"requesterId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<RequestDownloadMutation, RequestDownloadMutationVariables>;
 export const SubscribeDownloadDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"SubscribeDownload"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"downloadId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getDownload"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"downloadId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"downloadId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"download"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"link"}},{"kind":"Field","name":{"kind":"Name","value":"percentage"}},{"kind":"Field","name":{"kind":"Name","value":"file"}},{"kind":"Field","name":{"kind":"Name","value":"state"}}]}}]}}]}}]} as unknown as DocumentNode<SubscribeDownloadSubscription, SubscribeDownloadSubscriptionVariables>;
