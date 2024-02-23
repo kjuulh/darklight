@@ -12,9 +12,9 @@
   },
   "dependencies": {
     "@apollo/client": "3.5.10",
-    "@graphql-tools/load-files": "6.0.18",
-    "@graphql-tools/merge": "6.0.18",
-    "@graphql-tools/schema": "6.0.18",
+    "@graphql-tools/load-files": "7.0.0",
+    "@graphql-tools/merge": "9.0.3",
+    "@graphql-tools/schema": "10.0.3",
     "@graphql-yoga/node": "^2.2.1",
     "apollo-link-context": "1.0.20",
     "graphql": "16.3.0",
