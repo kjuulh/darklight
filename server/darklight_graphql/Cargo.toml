@@ -6,15 +6,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = "0.5.6"
-tokio = { version = "1.18.2", features = ["full"] }
+axum = "0.7.5"
+tokio = { version = "1.37.0", features = ["full"] }
 futures = "0.3.21"
-tower-http = { version = "0.3.3", features = ["cors"] }
-async-graphql = "4.0.0"
-async-graphql-axum = "4.0.0"
-slab = "0.4.6"
-serde = "1.0.137"
-serde_json = "1.0.81"
+tower-http = { version = "0.5.2", features = ["cors"] }
+async-graphql = "7.0.3"
+async-graphql-axum = "7.0.3"
+slab = "0.4.9"
+serde = "1.0.197"
+serde_json = "1.0.115"
 
 darklight_events = {path = "../darklight_events"}
 darklight_app = {path = "../darklight_app"}
