@@ -1,4 +1,4 @@
-FROM node:16-alpine AS base
+FROM node:21-alpine AS base
 RUN apk add --no-cache curl \
     && curl -sL https://unpkg.com/@pnpm/self-installer | node
 
@@ -34,7 +34,7 @@ RUN yarn build
 # RUN npm run build
 
 # Production image, copy all the files and run next
-FROM node:16-alpine AS runner
+FROM node:21-alpine AS runner
 WORKDIR /app
 
 COPY .env.production .
